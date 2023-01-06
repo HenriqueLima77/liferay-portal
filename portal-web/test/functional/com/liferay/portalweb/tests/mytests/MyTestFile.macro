@@ -1,0 +1,38 @@
+definition {
+    macro OpenSimulation {
+
+        Click(locator1 = "MyTestFile#SIMULATION_BTN");
+    }
+
+    macro TypePXHeightAndWidth {
+
+        Click(locator1 = "MyTestFile#CUSTOM_BTN");
+
+        Type(locator1 = "MyTestFile#TYPE_HEIGHT", value1 = "1920");
+
+        Type(locator1 = "MyTestFile#TYPE_WIDTH", value1 = "1080");
+    }
+
+    macro OpenPortalMenu {
+
+        Click(locator1 = "MyTestFile#PORTAL_MENU");
+    }
+
+    macro OpenControlPanel {
+
+        WaitForElementPresent(locator1 = "MyTestFile#MENU_OPEN");
+
+        Click(locator1 = "MyTestFile#CONTROL_PANEL");
+
+        AssertVisible(locator1 = "MyTestFile#CONFIGURATION_VISIBLE");
+    }
+
+	macro viewFormEntryWorkflowStatus {
+        var key_language = "${language}";
+		var key_name = "${name}";
+
+		AssertTextEquals(
+			locator1 = "MyTestFile#FORM_ENTRY_STATUS",
+			value1 = "${name}");
+	}
+}
