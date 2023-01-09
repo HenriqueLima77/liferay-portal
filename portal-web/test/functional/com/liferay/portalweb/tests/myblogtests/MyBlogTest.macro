@@ -38,5 +38,11 @@ definition {
         IsElementPresent(locator1 = "MyBlogTest#TITLE_BLOG");
     }
 
+    macro checkElementPresentSearch {
+        var key_title = "${title}";
+
+        IsElementPresent(locator1 = "MyBlogTest#TITLE_BLOG_SEARCH");
+    }
+
 
 }
