@@ -1,0 +1,50 @@
+@component-name = "portal-lima"
+definition {
+    property testray.main.component.name = "Blogs";
+
+    setUp {
+        TestCase.setUpPortalInstance();
+
+        User.firstLoginPG();
+
+        Navigator.openURL();
+    }
+
+     tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+     }
+
+    @description = "Can Create a Blog"
+    @priority = "5"
+    test CanCreateBlog {
+
+	BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+    Blogs.addEntry(
+		entryContent = "Blogs Entry Content 2",
+		entryTitle = "Blogs Entry Title 2");
+
+    Blogs.addEntry(
+		entryContent = "Blogs Entry Content 1",
+		entryTitle = "Blogs Entry Title 1");
+
+    Navigator.gotoPage(pageName = "Home");
+
+    MyBlogTest.clickToControlMenu();
+
+	PageEditor.addWidgetViaKeyboard(
+	    categoryName = "Collaboration",
+		widgetName = "Blogs");
+
+    PortletEntry.publish();
+
+	MyBlogTest.viewEntryCP(
+		entryContent = "Blogs Entry Content 1",
+		entryTitle = "Blogs Entry Title 1");
+    }
+
+}
