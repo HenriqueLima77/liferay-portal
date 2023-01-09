@@ -1,0 +1,7 @@
+definition {
+
+    macro clickToControlMenu {
+        Click(locator1 = "MyBlogTest#BUTTON_EDIT_PAGE");
+    }
+    
+}
