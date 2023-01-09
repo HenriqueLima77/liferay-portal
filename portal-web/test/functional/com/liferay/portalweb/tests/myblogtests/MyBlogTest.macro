@@ -18,4 +18,13 @@ definition {
 
     }
 
+    macro deleteBlogEntry {
+        var key_index = "${index}";
+
+        Click(locator1 = "MyBlogTest#OPEN_OPTIONS_BLOG");
+
+        Click(locator1 = "MyBlogTest#DELETE_BLOG");
+    }
+
+
 }
