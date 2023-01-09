@@ -113,4 +113,12 @@ definition {
 			value1 = "1080");
 	}
 
+	@description = "Access Portal Global Menu and validate CONFIGURATION string at Control Panel"
+	@priority = "5"
+	test ValidateConfigurationStringAtControlPanel {
+		MyTestFile.OpenPortalMenu();
+
+		MyTestFile.OpenControlPanel();
+	}
+
 }
