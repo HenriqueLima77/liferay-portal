@@ -50,5 +50,12 @@ definition {
         IsElementNotPresent(locator1 = "MyBlogTest#TITLE_BLOG_SEARCH");
     }
 
+	macro searchEmbedded {
+		AssertElementPresent(locator1 = "MyBlogTest#SEARCH_FOR");
 
-}
+		Type(
+			locator1 = "MyBlogTest#SEARCH_FOR",
+			value1 = "${searchTerm}");
+
+}        Click(locator1 = "MyBlogTest#LUPA_SEARCH");
+    }
