@@ -74,4 +74,18 @@ definition {
         MyBlogTest.checkElementPresent(entryTitle = "Blogs Entry Content 2");
     }
 
+    @description = "Can Search Blogs"
+    @priority = "5"
+    test CanSearchBlogs {
+        BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		MyBlogTest.searchEmbedded(searchTerm = """Blogs Entry Title 1""");
+
+        MyBlogTest.checkElementNotPresentSearch(title = "Blogs Entry Title 1");
+
+        MyBlogTest.searchEmbedded(searchTerm = """Blogs Entry Title 2""");
+
+        MyBlogTest.checkElementPresent(title = "Blogs Entry Title 2");
+    }
+
 }
