@@ -8,4 +8,8 @@ definition {
 		AssertVisible(locator1 = "MyTestFile#CONFIGURATION_VISIBLE");
 	}
 
+	macro OpenPortalMenu {
+		Click(locator1 = "MyTestFile#PORTAL_MENU");
+	}
+
 }
