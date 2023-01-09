@@ -1,0 +1,100 @@
+@component-name = "portal-web-forms-and-data-lists"
+definition {
+
+	property testray.main.component.name = "Forms";
+
+	setUp {
+		TestCase.setUpPortalInstance();
+
+		User.firstLoginPG();
+
+		Navigator.openURL();
+	}
+
+	tearDown {
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "test@liferay.com",
+			userLoginFullName = "Test Test");
+	}
+
+	@description = "Forms Translate"
+	@priority = "5"
+	test FormsTranslate {
+		FormsAdmin.addForm();
+
+		Form.editName(formTitle = "My Form");
+
+		Form.gotoAddField(fieldType = "Numeric");
+
+		Form.editFieldLabelMetal(fieldValue = "Age");
+
+		Form.closeSidebar();
+
+		Form.gotoAddField(fieldType = "Text");
+
+		Form.editFieldLabelMetal(fieldValue = "Full Name");
+
+		Form.addTranslation(localizedLanguage = "Portuguese (Brazil)");
+
+		Form.editName(formTitle = "Meu Formulario");
+
+		FormViewBuilder.editFieldLabel(
+			fieldLabel = "Full Name",
+			label = "Nome Completo");
+
+		FormViewBuilder.editFieldLabel(
+			fieldLabel = "Age",
+			label = "Idade");
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.editText(
+			fieldName = "Full Name",
+			fieldValue = "Henrique");
+
+		FormFields.editText(
+			fieldName = "Age",
+			fieldValue = "23");
+
+		FormPortlet.submitSuccessfully();
+
+		Form.submitAgain();
+
+		FormPortletConfiguration.changeLanguage(
+			currentLanguage = "en-US",
+			newLanguage = "português-Brasil");
+
+		FormFields.editText(
+			fieldName = "Nome Completo",
+			fieldValue = "Romanov");
+
+		FormFields.editText(
+			fieldName = "Idade",
+			fieldValue = "20");
+
+		FormPortlet.submitSuccessfully();
+
+		FormsAdminNavigator.closePublishedFormWindow();
+
+		FormsAdminNavigator.gotoViewEntries();
+
+		MyTestFile.viewFormEntryWorkflowStatus(
+			language = "en-us",
+			name = "Henrique");
+
+		MyTestFile.viewFormEntryWorkflowStatus(
+			language = "en-us",
+			name = "23");
+
+		MyTestFile.viewFormEntryWorkflowStatus(
+			language = "pt-br",
+			name = "Romanov");
+
+		MyTestFile.viewFormEntryWorkflowStatus(
+			language = "pt-br",
+			name = "20");
+	}
+
+}
