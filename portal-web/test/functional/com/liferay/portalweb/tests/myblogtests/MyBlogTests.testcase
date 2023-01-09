@@ -47,4 +47,21 @@ definition {
 		entryTitle = "Blogs Entry Title 1");
     }
 
+    @description = "Can Edit a Blog"
+    @priority = "5"
+    test CanEditBlog {
+	BlogsEntry.editContentViaCardViewPG(
+		entryContent = "Blogs Entry Content 1",
+		entryContentEdit = "Blogs Entry Content Edited",
+		entryTitle = "Blogs Entry Title 1");
+
+    PortletEntry.publish();
+
+    MyBlogTest.viewEntryCP(
+		entryContent = "Blogs Entry Content Edited",
+		entryTitle = "Blogs Entry Title 1");
+
+    }
+
+
 }
