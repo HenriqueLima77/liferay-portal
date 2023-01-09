@@ -63,5 +63,15 @@ definition {
 
     }
 
+    @description = "Can Delete a Blog"
+    @priority = "5"
+    test CanDeleteBlog {
+        
+        MyBlogTest.deleteBlogEntry(index = "1");
+
+        MyBlogTest.checkElementNotPresent(entryTitle = "Blogs Entry Content 1");
+
+        MyBlogTest.checkElementPresent(entryTitle = "Blogs Entry Content 2");
+    }
 
 }
