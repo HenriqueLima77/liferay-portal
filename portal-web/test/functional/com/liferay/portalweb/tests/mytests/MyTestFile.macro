@@ -28,4 +28,13 @@ definition {
 			value1 = "1080");
 	}
 
+	macro viewFormEntryWorkflowStatus {
+		var key_language = "${language}";
+		var key_name = "${name}";
+
+		AssertTextEquals(
+			locator1 = "MyTestFile#FORM_ENTRY_STATUS",
+			value1 = "${name}");
+	}
+
 }
