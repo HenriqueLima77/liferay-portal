@@ -4,4 +4,18 @@ definition {
         Click(locator1 = "MyBlogTest#BUTTON_EDIT_PAGE");
     }
     
+    macro viewEntryCP {
+		var key_entryContent = "${entryContent}";
+		var key_entryTitle = "${entryTitle}";
+
+		AssertTextEquals(
+			locator1 = "MyBlogTest#TITLE_BLOG",
+			value1 = "${entryTitle}");
+
+		AssertTextEquals(
+			locator1 = "MyBlogTest#CONTENT_BLOG",
+			value1 = "${entryContent}");
+
+    }
+
 }
