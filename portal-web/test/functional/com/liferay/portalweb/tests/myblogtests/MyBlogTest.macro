@@ -26,5 +26,11 @@ definition {
         Click(locator1 = "MyBlogTest#DELETE_BLOG");
     }
 
+    macro checkElementNotPresent {
+        var key_entryTitle = "${entryTitle}";
+
+        IsElementNotPresent(locator1 = "MyBlogTest#TITLE_BLOG");
+    }
+
 
 }
