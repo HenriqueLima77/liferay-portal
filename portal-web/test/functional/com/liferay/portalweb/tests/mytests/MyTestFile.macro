@@ -12,4 +12,8 @@ definition {
 		Click(locator1 = "MyTestFile#PORTAL_MENU");
 	}
 
+	macro OpenSimulation {
+		Click(locator1 = "MyTestFile#SIMULATION_BTN");
+	}
+
 }
