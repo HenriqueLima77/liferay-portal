@@ -1,0 +1,11 @@
+definition {
+
+	macro OpenControlPanel {
+		WaitForElementPresent(locator1 = "MyTestFile#MENU_OPEN");
+
+		Click(locator1 = "MyTestFile#CONTROL_PANEL");
+
+		AssertVisible(locator1 = "MyTestFile#CONFIGURATION_VISIBLE");
+	}
+
+}
