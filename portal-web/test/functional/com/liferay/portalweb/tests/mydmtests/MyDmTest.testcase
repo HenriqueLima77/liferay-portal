@@ -1,26 +1,27 @@
 @component-name = "portal-document-management"
 definition {
-    property testray.main.component.name = "Document Management";
 
-    setUp {
-        TestCase.setUpPortalInstance();
+	property testray.main.component.name = "Document Management";
 
-        User.firstLoginPG();
+	setUp {
+		TestCase.setUpPortalInstance();
 
-        Navigator.openURL();
-    }
+		User.firstLoginPG();
 
-     tearDown {
+		Navigator.openURL();
+	}
+
+	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
 		if ("${testPortalInstance}" == "true") {
 			PortalInstances.tearDownCP();
 		}
-     }
+	}
 
-    @description = "Can Create a Documents and Media"
-    @priority = "5"
-    test CanCreateDM {
+	@description = "Can Create a Documents and Media"
+	@priority = "5"
+	test CanCreateDM {
 		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
 
 		DMDocument.addCP(
@@ -37,9 +38,7 @@ definition {
 
 		PortletEntry.publish();
 
-		DMDocument.viewPG(
-            dmDocumentTitle = "Commerce_Blue.jpg"
-        );
-    }
+		DMDocument.viewPG(dmDocumentTitle = "Commerce_Blue.jpg");
+	}
 
 }
