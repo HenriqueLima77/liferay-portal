@@ -57,7 +57,6 @@ definition {
 		AssertTextEquals(
 			locator1 = "MyBlogTest#CONTENT_BLOG",
 			value1 = "${entryContent}");
-
 	}
 
 }
