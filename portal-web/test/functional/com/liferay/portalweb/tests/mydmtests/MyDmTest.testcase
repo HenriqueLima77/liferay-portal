@@ -67,9 +67,9 @@ definition {
 			dmDocumentTitle = "DM Document Title");
 	}
 
-    @description = "Can Edit a Documents and Media"
-    @priority = "5"
-    test CanEditDM {
+	@description = "Can Edit a Documents and Media"
+	@priority = "5"
+	test CanEditDM {
 		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
 
 		DMDocument.editPG(
@@ -82,7 +82,6 @@ definition {
 		DMDocument.viewPG(
 			dmDocumentFileName = "Document_2.doc",
 			dmDocumentTitle = "DM Document Title Version 2");
-    }
-
+	}
 
 }
