@@ -1,10 +1,50 @@
 definition {
 
-    macro clickToControlMenu {
-        Click(locator1 = "MyBlogTest#BUTTON_EDIT_PAGE");
-    }
-    
-    macro viewEntryCP {
+	macro checkElementNotPresent {
+		var key_entryTitle = "${entryTitle}";
+
+		IsElementNotPresent(locator1 = "MyBlogTest#TITLE_BLOG");
+	}
+
+	macro checkElementNotPresentSearch {
+		var key_title = "${title}";
+
+		IsElementNotPresent(locator1 = "MyBlogTest#TITLE_BLOG_SEARCH");
+	}
+
+	macro checkElementPresent {
+		var key_entryTitle = "${entryTitle}";
+
+		IsElementPresent(locator1 = "MyBlogTest#TITLE_BLOG");
+	}
+
+	macro checkElementPresentSearch {
+		var key_title = "${title}";
+
+		IsElementPresent(locator1 = "MyBlogTest#TITLE_BLOG_SEARCH");
+	}
+
+	macro clickToControlMenu {
+		Click(locator1 = "MyBlogTest#BUTTON_EDIT_PAGE");
+	}
+
+	macro deleteBlogEntry {
+		var key_index = "${index}";
+
+		Click(locator1 = "MyBlogTest#OPEN_OPTIONS_BLOG");
+
+		Click(locator1 = "MyBlogTest#DELETE_BLOG");
+	}
+
+	macro searchEmbedded {
+		AssertElementPresent(locator1 = "MyBlogTest#SEARCH_FOR");
+
+		Type(
+			locator1 = "MyBlogTest#SEARCH_FOR",
+			value1 = "${searchTerm}");
+	}
+
+	macro viewEntryCP {
 		var key_entryContent = "${entryContent}";
 		var key_entryTitle = "${entryTitle}";
 
@@ -15,47 +55,8 @@ definition {
 		AssertTextEquals(
 			locator1 = "MyBlogTest#CONTENT_BLOG",
 			value1 = "${entryContent}");
+	}
 
-    }
+	Click(locator1 = "MyBlogTest#LUPA_SEARCH");
 
-    macro deleteBlogEntry {
-        var key_index = "${index}";
-
-        Click(locator1 = "MyBlogTest#OPEN_OPTIONS_BLOG");
-
-        Click(locator1 = "MyBlogTest#DELETE_BLOG");
-    }
-
-    macro checkElementNotPresent {
-        var key_entryTitle = "${entryTitle}";
-
-        IsElementNotPresent(locator1 = "MyBlogTest#TITLE_BLOG");
-    }
-
-    macro checkElementPresent {
-        var key_entryTitle= "${entryTitle}";
-
-        IsElementPresent(locator1 = "MyBlogTest#TITLE_BLOG");
-    }
-
-    macro checkElementPresentSearch {
-        var key_title = "${title}";
-
-        IsElementPresent(locator1 = "MyBlogTest#TITLE_BLOG_SEARCH");
-    }
-
-    macro checkElementNotPresentSearch {
-        var key_title = "${title}";
-
-        IsElementNotPresent(locator1 = "MyBlogTest#TITLE_BLOG_SEARCH");
-    }
-
-	macro searchEmbedded {
-		AssertElementPresent(locator1 = "MyBlogTest#SEARCH_FOR");
-
-		Type(
-			locator1 = "MyBlogTest#SEARCH_FOR",
-			value1 = "${searchTerm}");
-
-}        Click(locator1 = "MyBlogTest#LUPA_SEARCH");
-    }
+}
