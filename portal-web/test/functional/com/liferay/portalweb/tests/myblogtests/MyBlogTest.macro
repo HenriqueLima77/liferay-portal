@@ -58,9 +58,6 @@ definition {
 			locator1 = "MyBlogTest#CONTENT_BLOG",
 			value1 = "${entryContent}");
 
-		Click(locator1 = "MyBlogTest#LUPA_SEARCH");
 	}
-
-	
 
 }
