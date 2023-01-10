@@ -41,4 +41,20 @@ definition {
 		DMDocument.viewPG(dmDocumentTitle = "Commerce_Blue.jpg");
 	}
 
+    @description = "Can Delete a Documents and Media"
+    @priority = "5"
+    test CanDeleteDM {
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+		DMDocument.addCP(
+			dmDocumentFile = "Document_1.doc",
+			dmDocumentTitle = "DM Document Title");
+
+		DMDocument.deleteCP(dmDocumentTitle = "Commerce_Blue.jpg");
+
+        MyDmTest.checkElementPresent(entryTitle = "DM Document Title");
+        
+        MyDmTest.checkElementNotPresent(entryTitle = "Commerce_Blue.jpg");
+    }
+
 }
