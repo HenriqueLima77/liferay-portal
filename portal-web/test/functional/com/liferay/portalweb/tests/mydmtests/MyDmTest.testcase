@@ -1,0 +1,45 @@
+@component-name = "portal-document-management"
+definition {
+    property testray.main.component.name = "Document Management";
+
+    setUp {
+        TestCase.setUpPortalInstance();
+
+        User.firstLoginPG();
+
+        Navigator.openURL();
+    }
+
+     tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+     }
+
+    @description = "Can Create a Documents and Media"
+    @priority = "5"
+    test CanCreateDM {
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+		DMDocument.addCP(
+			dmDocumentFile = "Commerce_Blue.jpg",
+			dmDocumentTitle = "Commerce_Blue.jpg");
+
+		Navigator.gotoPage(pageName = "Home");
+
+		MyBlogTest.clickToControlMenu();
+
+		PageEditor.addWidgetViaKeyboard(
+			categoryName = "Highlighted",
+			widgetName = "Documents and Media");
+
+		PortletEntry.publish();
+
+		DMDocument.viewPG(
+            dmDocumentTitle = "Commerce_Blue.jpg"
+        );
+    }
+
+}
