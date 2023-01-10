@@ -58,5 +58,8 @@ definition {
 	}
 
 	Click(locator1 = "MyBlogTest#LUPA_SEARCH");
+	}
+
+	
 
 }
