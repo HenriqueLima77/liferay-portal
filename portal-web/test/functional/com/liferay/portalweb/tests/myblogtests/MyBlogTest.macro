@@ -42,6 +42,8 @@ definition {
 		Type(
 			locator1 = "MyBlogTest#SEARCH_FOR",
 			value1 = "${searchTerm}");
+
+		Click(locator1 = "MyBlogTest#LUPA_SEARCH");
 	}
 
 	macro viewEntryCP {
