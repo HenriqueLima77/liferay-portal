@@ -57,14 +57,14 @@ definition {
 		MyDmTest.checkElementNotPresent(entryTitle = "Commerce_Blue.jpg");
 	}
 
-    @description = "Can Download a Documents and Media"
-    @priority = "5"
-    test CanDownloadDM {
+	@description = "Can Download a Documents and Media"
+	@priority = "5"
+	test CanDownloadDM {
 		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
 
 		DMDocument.downloadCP(
-			dmDocumentTitle = "DM Document Title",
-            dmDocumentSize = "22 KB");
-    }
+			dmDocumentSize = "22 KB",
+			dmDocumentTitle = "DM Document Title");
+	}
 
 }
