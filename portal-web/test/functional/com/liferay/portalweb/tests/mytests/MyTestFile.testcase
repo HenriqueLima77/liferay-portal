@@ -102,15 +102,17 @@ definition {
 	test SetScreenSizeAndValidateValues {
 		MyTestFile.OpenSimulation();
 
-		MyTestFile.TypePXHeightAndWidth();
+		MyTestFile.TypePXHeightAndWidth(
+			valueScreenSize = "Height",
+			pxScreenSize = "1920");
 
-		AssertTextEquals.assertValue(
-			locator1 = "MyTestFile#TYPE_HEIGHT",
-			value1 = "1920");
+		MyTestFile.TypePXHeightAndWidth(
+			valueScreenSize = "Width",
+			pxScreenSize = "1080");
 
-		AssertTextEquals.assertValue(
-			locator1 = "MyTestFile#TYPE_WIDTH",
-			value1 = "1080");
+		MyTestFile.checkScreenSizeValue(valueScreenSize = "Height");
+
+		MyTestFile.checkScreenSizeValue(valueScreenSize = "Width");
 	}
 
 	@description = "Access Portal Global Menu and validate CONFIGURATION string at Control Panel"
