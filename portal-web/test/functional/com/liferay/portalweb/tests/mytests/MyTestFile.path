@@ -10,70 +10,51 @@
 </thead>
 
 <tbody>
-
-	------------------------------------
-<tr>
-	<td>SIMULATION_BTN</td>
-	<td>//button[@data-qa-id='simulation']</td>
-	<td></td>
-</tr>
-	------------------------------------
-
-<tr>
-	<td>TYPE_HEIGHT</td>
-	<td>//input[@name='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_height']</td>
-	<td></td>
-</tr>
-	------------------------------------
-
-<tr>
-	<td>TYPE_WIDTH</td>
-	<td>//input[@name='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_width']</td>
-	<td></td>
-</tr>
-	------------------------------------
-
-<tr>
-	<td>CUSTOM_BTN</td>
-	<td>//span[@class='d-block mb-3 mt-1'][contains(text(),'Custom')]</td>
-	<td></td>
-</tr>
-	------------------------------------
-
-<tr>
-	<td>PORTAL_MENU</td>
-	<td>//button[@data-qa-id='applicationsMenu']</td>
-	<td></td>
-</tr>
-	------------------------------------
-
-<tr>
-	<td>CONTROL_PANEL</td>
-	<td>xpath=(//span[@class='c-inner'])[4]</td>
-	<td></td>
-</tr>
-	------------------------------------
-
-<tr>
-	<td>MENU_OPEN</td>
-	<td>//div[@class='applications-menu-wrapper']</td>
-	<td></td>
-</tr>
-	------------------------------------
-
 <tr>
 	<td>CONFIGURATION_VISIBLE</td>
 	<td>//h2[@class='applications-menu-nav-header'][contains(text(),'Configuration')]</td>
 	<td></td>
 </tr>
-	------------------------------------
-
+<tr>
+	<td>CONTROL_PANEL</td>
+	<td>xpath=(//span[@class='c-inner'])[4]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CUSTOM_BTN</td>
+	<td>//span[@class='d-block mb-3 mt-1'][contains(text(),'Custom')]</td>
+	<td></td>
+</tr>
 <tr>
 	<td>FORM_ENTRY_STATUS</td>
 	<td>//tbody//tr[@data-qa-id='row']//td[@class=' lfr-language-column']//div[@class='search-container-column-language']//*[contains(@class,'h4 lexicon-icon lexicon-icon-${key_language}')]//ancestor::td//following-sibling::td//span[contains(text(),'${key_name}')]</td>
 	<td></td>
 </tr>
-
+<tr>
+	<td>MENU_OPEN</td>
+	<td>//div[@class='applications-menu-wrapper']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PORTAL_MENU</td>
+	<td>//button[@data-qa-id='applicationsMenu']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SIMULATION_BTN</td>
+	<td>//button[@data-qa-id='simulation']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>TYPE_HEIGHT</td>
+	<td>//input[@name='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_height']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>TYPE_WIDTH</td>
+	<td>//input[@name='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_width']</td>
+	<td></td>
+</tr>
 </tbody>
 </table>
 </body>
