@@ -12,17 +12,17 @@
 <tbody>
 <tr>
 	<td>CONFIGURATION_VISIBLE</td>
-	<td>//h2[@class='applications-menu-nav-header'][contains(text(),'Configuration')]</td>
+	<td>//div[contains(@class,'applications-menu')]//h2[@class='applications-menu-nav-header'][contains(text(),'Configuration')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>CONTROL_PANEL</td>
-	<td>xpath=(//span[@class='c-inner'])[4]</td>
+	<td>//button[contains(@class,'nav-link')]//span[contains(text(),'Control Panel')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>CUSTOM_BTN</td>
-	<td>//span[@class='d-block mb-3 mt-1'][contains(text(),'Custom')]</td>
+	<td>//div[contains(@id,'simulation')]//span[contains(text(),'Custom')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -37,22 +37,22 @@
 </tr>
 <tr>
 	<td>PORTAL_MENU</td>
-	<td>//button[@data-qa-id='applicationsMenu']</td>
+	<td>//ul[contains(@class,'control-menu-nav')]/li/button[contains(@data-qa-id,'applicationsMenu')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>SIMULATION_BTN</td>
-	<td>//button[@data-qa-id='simulation']</td>
+	<td>//button[contains(@id,'SimulationPortlet')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>TYPE_HEIGHT</td>
-	<td>//input[@name='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_height']</td>
+	<td>//div[contains(@class,'custom-devices')]//*[contains(text(),'height')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>TYPE_WIDTH</td>
-	<td>//input[@name='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_width']</td>
+	<td>//div[contains(@class,'custom-devices')]//*[contains(text(),'width')]</td>
 	<td></td>
 </tr>
 </tbody>
