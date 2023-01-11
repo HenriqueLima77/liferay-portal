@@ -102,11 +102,11 @@ definition {
 	test SetScreenSizeAndValidateValues {
 		MyTestFile.OpenSimulation();
 
-		MyTestFile.TypePXHeightAndWidth(
+		MyTestFile.TypeHeightAndWidth(
 			pxScreenSize = "1920",
 			valueScreenSize = "Height");
 
-		MyTestFile.TypePXHeightAndWidth(
+		MyTestFile.TypeHeightAndWidth(
 			pxScreenSize = "1080",
 			valueScreenSize = "Width");
 

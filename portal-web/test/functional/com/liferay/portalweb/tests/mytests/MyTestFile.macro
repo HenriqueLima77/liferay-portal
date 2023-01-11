@@ -32,7 +32,7 @@ definition {
 		Click(locator1 = "MyTestFile#SIMULATION_BTN");
 	}
 
-	macro TypePXHeightAndWidth {
+	macro TypeHeightAndWidth {
 		var key_valueScreenSize = "${valueScreenSize}";
 
 		Click(locator1 = "MyTestFile#CUSTOM_BTN");
