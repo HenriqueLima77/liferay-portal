@@ -22,7 +22,6 @@ import com.liferay.layout.util.LayoutsTree;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -45,7 +44,6 @@ import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.LayoutSetBranchLocalService;
 import com.liferay.portal.kernel.service.permission.GroupPermission;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
-import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.servlet.BrowserSniffer;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -436,7 +434,7 @@ public class LayoutsTreeImpl implements LayoutsTree {
 			LayoutSetBranch layoutSetBranch)
 		throws Exception {
 
-		if (!LayoutPermissionUtil.contains(
+		if (!_layoutPermission.contains(
 				themeDisplay.getPermissionChecker(), layout,
 				ActionKeys.DELETE)) {
 
@@ -585,11 +583,11 @@ public class LayoutsTreeImpl implements LayoutsTree {
 
 			Layout draftLayout = _getDraftLayout(layout);
 
-			if ((draftLayout != null) &&
-				LayoutPermissionUtil.contains(
-					themeDisplay.getPermissionChecker(), layout,
-					ActionKeys.UPDATE)) {
+			boolean hasUpdatePermission =
+				_layoutPermission.containsLayoutUpdatePermission(
+					themeDisplay.getPermissionChecker(), layout);
 
+			if ((draftLayout != null) && hasUpdatePermission) {
 				jsonObject.put("draftStatus", "draft");
 
 				String draftLayoutURL = _portal.getLayoutFriendlyURL(
@@ -619,19 +617,13 @@ public class LayoutsTreeImpl implements LayoutsTree {
 
 			String layoutName = layout.getName(themeDisplay.getLocale());
 
-			try {
-				if ((draftLayout != null) &&
-					(_layoutContentModelResourcePermission.contains(
-						themeDisplay.getPermissionChecker(), layout.getPlid(),
-						ActionKeys.UPDATE) ||
-					 _layoutPermission.containsLayoutUpdatePermission(
-						 themeDisplay.getPermissionChecker(), layout))) {
+			if ((draftLayout != null) &&
+				(hasUpdatePermission || !layout.isPublished() ||
+				 _layoutContentModelResourcePermission.contains(
+					 themeDisplay.getPermissionChecker(), layout.getPlid(),
+					 ActionKeys.UPDATE))) {
 
-					layoutName = layoutName + StringPool.STAR;
-				}
-			}
-			catch (PortalException portalException) {
-				_log.error(portalException);
+				layoutName = layoutName + StringPool.STAR;
 			}
 
 			jsonObject.put(
@@ -649,7 +641,7 @@ public class LayoutsTreeImpl implements LayoutsTree {
 
 			jsonObject.put(
 				"parentable",
-				LayoutPermissionUtil.contains(
+				_layoutPermission.contains(
 					themeDisplay.getPermissionChecker(), layout,
 					ActionKeys.ADD_LAYOUT)
 			).put(
@@ -661,7 +653,14 @@ public class LayoutsTreeImpl implements LayoutsTree {
 			).put(
 				"privateLayout", layout.isPrivateLayout()
 			).put(
-				"regularURL", layout.getRegularURL(httpServletRequest)
+				"regularURL",
+				() -> {
+					if (hasUpdatePermission || layout.isPublished()) {
+						return layout.getRegularURL(httpServletRequest);
+					}
+
+					return StringPool.BLANK;
+				}
 			).put(
 				"sortable",
 				hasManageLayoutsPermission && !mobile &&
@@ -674,10 +673,7 @@ public class LayoutsTreeImpl implements LayoutsTree {
 			).put(
 				"type", layout.getType()
 			).put(
-				"updateable",
-				LayoutPermissionUtil.contains(
-					themeDisplay.getPermissionChecker(), layout,
-					ActionKeys.UPDATE)
+				"updateable", hasUpdatePermission
 			).put(
 				"uuid", layout.getUuid()
 			);

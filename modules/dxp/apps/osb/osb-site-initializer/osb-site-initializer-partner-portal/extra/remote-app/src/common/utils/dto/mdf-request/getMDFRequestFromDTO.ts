@@ -20,17 +20,46 @@ export function getMDFRequestFromDTO(
 	return {
 		...mdfRequest,
 		activities:
-			mdfRequest.mdfRequestToActivities?.map((activity) => ({
-				...activity,
-				budgets: activity.activityToBudgets || [],
-				endDate: activity.endDate?.split('T')[0],
-				leadFollowUpStrategies: activity.leadFollowUpStrategies?.split(
-					'; '
-				),
-				leadGenerated: String(activity.leadGenerated),
-				mdfRequestId: activity.r_mdfRequestToActivities_c_mdfRequestId,
-				startDate: activity.startDate?.split('T')[0],
-			})) || [],
+			mdfRequest.mdfRequestToActivities?.map((activityItem) => {
+				const {
+					activityToBudgets,
+					endDate,
+					id,
+					mdfRequestAmount,
+					mdfRequestExternalReferenceCodeSF,
+					name,
+					r_accountToActivities_accountEntryId,
+					r_mdfRequestToActivities_c_mdfRequestId,
+					startDate,
+					tactic,
+					totalCostOfExpense,
+					typeActivity,
+					...activityDescription
+				} = activityItem;
+
+				return {
+					activityDescription: {
+						...activityDescription,
+						leadFollowUpStrategies: activityItem.leadFollowUpStrategies?.split(
+							'; '
+						),
+						leadGenerated: String(activityItem.leadGenerated),
+					},
+					budgets: activityToBudgets || [],
+					endDate: endDate?.split('T')[0],
+					id,
+					mdfRequestAmount,
+					mdfRequestExternalReferenceCodeSF,
+					mdfRequestId: r_mdfRequestToActivities_c_mdfRequestId,
+					name,
+					r_accountToActivities_accountEntryId,
+					r_mdfRequestToActivities_c_mdfRequestId,
+					startDate: startDate?.split('T')[0],
+					tactic,
+					totalCostOfExpense,
+					typeActivity,
+				};
+			}) || [],
 		additionalOption: mdfRequest.additionalOption,
 		company: mdfRequest.r_accountToMDFRequests_accountEntry,
 		liferayBusinessSalesGoals: mdfRequest.liferayBusinessSalesGoals?.split(

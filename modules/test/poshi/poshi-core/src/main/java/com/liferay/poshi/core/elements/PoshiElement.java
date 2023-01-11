@@ -805,10 +805,44 @@ public abstract class PoshiElement
 
 	protected boolean isQuotedContent(String content) {
 		if (content.matches(NONQUOTED_REGEX)) {
+			if (content.contains("{")) {
+				return !isSingleVariable(content);
+			}
+
 			return false;
 		}
 
 		return true;
+	}
+
+	protected boolean isSingleVariable(String content) {
+		boolean singleVariable = false;
+
+		Stack<Character> stack = new Stack<>();
+
+		for (int i = 0; i < content.length(); i++) {
+			char c = content.charAt(i);
+
+			if (i > 0) {
+				char previousChar = content.charAt(i - 1);
+
+				if ((previousChar == '$') && (c == '{')) {
+					stack.push(c);
+				}
+			}
+
+			if (!stack.isEmpty() && (c == '}')) {
+				stack.pop();
+
+				if (i == (content.length() - 1)) {
+					singleVariable = true;
+				}
+
+				break;
+			}
+		}
+
+		return singleVariable;
 	}
 
 	protected boolean isValidFunctionFileName(String poshiScriptInvocation) {

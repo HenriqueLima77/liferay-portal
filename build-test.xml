@@ -13842,7 +13842,24 @@ go</echo>
 						docker exec ${database.host} /bin/bash /tmp/import-database.sh
 					]]>
 				</execute>
+
+				<get-testcase-property property.name="custom.mysql.sql.statement" />
+
+				<if>
+					<and>
+						<equals arg1="${database.type}" arg2="mysql" />
+						<isset property="custom.mysql.sql.statement" />
+					</and>
+					<then>
+						<sql classpath="${app.server.shielded-container-lib.portal.dir}/${jdbc.mysql.driver}" driver="${database.mysql.driver}" onerror="continue" output="output.txt" password="${database.mysql.password}" print="true" url="${database.mysql.url}" userid="${database.mysql.username}">
+							<![CDATA[
+								${custom.mysql.sql.statement}
+							]]>
+						</sql>
+					</then>
+				</if>
 			</then>
+
 			<else>
 				<if>
 					<equals arg1="${database.type}" arg2="db2" />
@@ -13929,6 +13946,22 @@ go</echo>
 							</retry>
 
 							<exec executable="mysql_upgrade" />
+
+							<get-testcase-property property.name="custom.mysql.sql.statement" />
+
+							<if>
+								<and>
+									<equals arg1="${database.type}" arg2="mysql" />
+									<isset property="custom.mysql.sql.statement" />
+								</and>
+								<then>
+									<sql classpath="${app.server.shielded-container-lib.portal.dir}/${jdbc.mysql.driver}" driver="${database.mysql.driver}" onerror="continue" output="output.txt" password="${database.mysql.password}" print="true" url="${database.mysql.url}" userid="${database.mysql.username}">
+										<![CDATA[
+											${custom.mysql.sql.statement}
+										]]>
+									</sql>
+								</then>
+							</if>
 						</then>
 					</elseif>
 					<elseif>

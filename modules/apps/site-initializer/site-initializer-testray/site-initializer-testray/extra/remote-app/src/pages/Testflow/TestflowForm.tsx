@@ -81,7 +81,14 @@ const TestflowForm = () => {
 		revalidate: {revalidateTaskUser},
 	} = outletContext ?? {data: {}, mutate: {}, revalidate: {}};
 
-	const {data} = useFetch('/casetypes?pageSize=100&fields=id,name');
+	const {data} = useFetch('/casetypes', {
+		fields: 'id,name',
+		pageSize: 100,
+	});
+
+	const caseTypes = useMemo(() => data?.items || [], [
+		data?.items,
+	]) as TestrayCaseType[];
 
 	const taskCaseTypeIds = testrayTaskCaseTypes.map(
 		({caseType}) => caseType?.id
@@ -107,17 +114,13 @@ const TestflowForm = () => {
 	});
 
 	useHeader({
-		useHeading: [
+		heading: [
 			{
 				category: i18n.translate('task'),
 				title: i18n.translate('testflow'),
 			},
 		],
 	});
-
-	const caseTypes = useMemo(() => data?.items || [], [
-		data?.items,
-	]) as TestrayCaseType[];
 
 	const onOpenModal = (option: 'select-users' | 'select-user-groups') => {
 		setModalType(option);

@@ -122,6 +122,7 @@ export default {
 	'create-x': 'Create {0}',
 	'created': 'Created',
 	'created-by': 'Created By',
+	'creator': 'Creator',
 	'current': 'Current',
 	'current-case-types': 'Current Case Types',
 	'current-main-components': 'Current Main Components',
@@ -249,6 +250,7 @@ export default {
 	'no-permissions': 'No Permissions',
 	'no-results-found': 'No results found',
 	'no-x': 'No {0}',
+	'notifications': 'Notifications',
 	'open': 'Open',
 	'operating-system': 'Operating System',
 	'option': 'Option',
@@ -417,6 +419,7 @@ export default {
 	'x-is-a-required-field': '{0} is a required field.',
 	'x-items': '{0} Items',
 	'x-items-cannot-be-deleted': '{0} items cannot be deleted',
+	'x-jobs-in-progress': '{0} Jobs in Progress',
 	'x-minutes': '{0} Minutes',
 	'x-results-for-x': '{0} Results for {1}',
 	'x-tests-were-split-into-x-successfully-view-x':

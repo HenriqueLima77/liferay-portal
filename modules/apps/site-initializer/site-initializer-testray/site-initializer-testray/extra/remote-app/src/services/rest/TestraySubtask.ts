@@ -74,7 +74,7 @@ class TestraySubtaskImpl extends Rest<SubtaskForm, TestraySubTask> {
 
 	private async getCaseResultsFromSubtask(subTaskId: number) {
 		const subTaskCaseResultResponse = await testraySubtaskCaseResultImpl.getAll(
-			searchUtil.eq('subtaskId', subTaskId)
+			{filter: searchUtil.eq('subtaskId', subTaskId)}
 		);
 
 		if (!subTaskCaseResultResponse) {
@@ -166,9 +166,9 @@ class TestraySubtaskImpl extends Rest<SubtaskForm, TestraySubTask> {
 		subTaskcomment: Partial<SubtaskForm>,
 		subTaskId: number
 	) {
-		const subtaskIssuesResponse = await testraySubtaskIssuesImpl.getAll(
-			searchUtil.eq('subtaskId', subTaskId)
-		);
+		const subtaskIssuesResponse = await testraySubtaskIssuesImpl.getAll({
+			filter: searchUtil.eq('subtaskId', subTaskId),
+		});
 
 		for (const issue of issues) {
 			const testrayIssue = await testrayIssueImpl.createIfNotExist(issue);
@@ -317,7 +317,7 @@ class TestraySubtaskImpl extends Rest<SubtaskForm, TestraySubTask> {
 			score: newSubtaskScore,
 			splitFromSubtaskId: selectedSubTask.id,
 			taskId,
-			userId: selectedSubTask.user.id,
+			userId: selectedSubTask.user?.id,
 		} as SubtaskForm);
 
 		for (const {id} of selectedSubTaskCaseResults) {
