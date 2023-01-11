@@ -4,14 +4,12 @@ definition {
 		var key_valueScreenSize = "${valueScreenSize}";
 
 		if ("${key_valueScreenSize}" == "Height") {
-
 			AssertTextEquals.assertValue(
 				locator1 = "MyTestFile#TYPE_HEIGHT_AND_WIDTH",
 				value1 = "1920");
 		}
 
 		if ("${valueScreenSize}" == "Width") {
-
 			AssertTextEquals.assertValue(
 				locator1 = "MyTestFile#TYPE_HEIGHT_AND_WIDTH",
 				value1 = "1080");

@@ -103,12 +103,12 @@ definition {
 		MyTestFile.OpenSimulation();
 
 		MyTestFile.TypePXHeightAndWidth(
-			valueScreenSize = "Height",
-			pxScreenSize = "1920");
+			pxScreenSize = "1920",
+			valueScreenSize = "Height");
 
 		MyTestFile.TypePXHeightAndWidth(
-			valueScreenSize = "Width",
-			pxScreenSize = "1080");
+			pxScreenSize = "1080",
+			valueScreenSize = "Width");
 
 		MyTestFile.checkScreenSizeValue(valueScreenSize = "Height");
 
