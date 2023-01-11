@@ -1,0 +1,23 @@
+<html>
+<head>
+<title>MyDmTest</title>
+</head>
+
+<body>
+<table border="1" cellpadding="1" cellspacing="1">
+<thead>
+<tr><td rowspan="1" colspan="3">MyDmTest</td></tr>
+</thead>
+
+<tbody>
+
+<tr>
+    <td>TITLE_DM</td>
+    <td>//a[@class='card-title text-truncate'][contains(text(),'${key_entryTitle}')]</td>
+    <td></td>
+</tr>
+
+</tbody>
+</table>
+</body>
+</html>
