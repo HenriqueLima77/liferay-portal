@@ -12,9 +12,9 @@
 <tbody>
 
 <tr>
-    <td>TITLE_DM</td>
-    <td>//a[@class='card-title text-truncate'][contains(text(),'${key_entryTitle}')]</td>
-    <td></td>
+	<td>TITLE_DM</td>
+	<td>//a[@class='card-title text-truncate'][contains(text(),'${key_entryTitle}')]</td>
+	<td></td>
 </tr>
 
 </tbody>
