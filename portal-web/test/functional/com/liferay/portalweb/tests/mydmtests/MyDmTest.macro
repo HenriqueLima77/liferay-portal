@@ -1,14 +1,15 @@
 definition {
-	macro checkElementPresent {
-		var key_entryTitle = "${entryTitle}";
-
-		IsElementPresent(locator1 = "MyDmTest#TITLE_DM");
-	}
 
 	macro checkElementNotPresent {
 		var key_entryTitle = "${entryTitle}";
 
 		IsElementNotPresent(locator1 = "MyDmTest#TITLE_DM");
+	}
+
+	macro checkElementPresent {
+		var key_entryTitle = "${entryTitle}";
+
+		IsElementPresent(locator1 = "MyDmTest#TITLE_DM");
 	}
 
 }
