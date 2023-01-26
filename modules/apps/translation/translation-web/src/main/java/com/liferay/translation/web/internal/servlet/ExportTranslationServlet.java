@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.Servlet;
@@ -170,6 +169,16 @@ public class ExportTranslationServlet extends HttpServlet {
 			String[] targetLanguageIds, Locale locale)
 		throws IOException, PortalException {
 
+		TranslationInfoItemFieldValuesExporter
+			translationInfoItemFieldValuesExporter =
+				_translationInfoItemFieldValuesExporterRegistry.
+					getTranslationInfoItemFieldValuesExporter(exportMimeType);
+
+		if (translationInfoItemFieldValuesExporter == null) {
+			throw new PortalException(
+				"Unknown export mime type: " + exportMimeType);
+		}
+
 		InfoItemHelper infoItemHelper = new InfoItemHelper(
 			className, _infoItemServiceRegistry);
 
@@ -181,12 +190,6 @@ public class ExportTranslationServlet extends HttpServlet {
 					StringPool.SPACE + classPK;
 		}
 
-		Optional<TranslationInfoItemFieldValuesExporter>
-			exportFileFormatOptional =
-				_translationInfoItemFieldValuesExporterRegistry.
-					getTranslationInfoItemFieldValuesExporterOptional(
-						exportMimeType);
-
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
 			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class, className);
@@ -196,12 +199,6 @@ public class ExportTranslationServlet extends HttpServlet {
 				InfoItemObjectProvider.class, className);
 
 		Object object = infoItemObjectProvider.getInfoItem(classPK);
-
-		TranslationInfoItemFieldValuesExporter
-			translationInfoItemFieldValuesExporter =
-				exportFileFormatOptional.orElseThrow(
-					() -> new PortalException(
-						"Unknown export mime type: " + exportMimeType));
 
 		for (String targetLanguageId : targetLanguageIds) {
 			zipWriter.addEntry(

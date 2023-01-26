@@ -25,6 +25,7 @@ definition {
 	@priority = "5"
 	test CanActivateOrDeactivateAction {
 		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "ObjectActions#CanActivateOrDeactivateAction";
 
 		task ("Add an object, field, action, and check if an action is active") {
 			ObjectAdmin.addObjectViaAPI(
@@ -49,7 +50,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				inputMethod = "true",
 				inputValue = "Action shot on add",
@@ -59,7 +61,7 @@ definition {
 
 			ObjectAdmin.assertObjectActions(
 				actionActive = "Yes",
-				actionName = "Custom Action");
+				actionName = "CustomAction");
 		}
 
 		task ("Add an Entry and check if the action is works") {
@@ -89,7 +91,7 @@ definition {
 
 			ObjectAdmin.activateOrDeactivateAction(
 				active = "false",
-				viewEntry = "Custom Action");
+				viewEntry = "CustomAction");
 
 			ObjectAdmin.addObjectSingleFieldEntryViaAPI(
 				fieldName = "customObjectField",
@@ -140,24 +142,26 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080",
 			whenAction = "On After Add");
 
-		ObjectAdmin.goToActionDetails(viewEntry = "Action Name");
+		ObjectAdmin.goToActionDetails(viewEntry = "ActionName");
 
 		ObjectAdmin.viewDetails();
 
 		SelectFrame(locator1 = "IFrame#IFRAME");
 
 		ObjectAdmin.fillObjectAction(
-			actionName = "Update Action Name",
+			actionLabel = "Update Action Label",
+			actionName = "UpdateActionName",
 			click = "cancel");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "Yes",
-			actionName = "Action Name");
+			actionName = "ActionName");
 	}
 
 	@description = "LPS-139008 - Verify it is possible to create an Action"
@@ -175,14 +179,196 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080",
 			whenAction = "On After Add");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "Yes",
-			actionName = "Action Name");
+			actionName = "ActionName");
+	}
+
+	@description = "LPS-145665 - Verify it's possible to add an object entry with the trigger On Order Status Update"
+	@priority = "4"
+	test CanCreateActionAddObjectEntryWithOnOrderStatusUpdate {
+		task ("Given an action in the Commerce Order triggered with Custom Object.") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 171861",
+				objectName = "CustomObject171861",
+				pluralLabelName = "Custom Objects 171861");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Text",
+				fieldLabelName = "Custom Field",
+				fieldName = "customObjectField",
+				fieldType = "String",
+				isRequired = "true",
+				objectName = "CustomObject171861");
+
+			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject171861");
+
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectSystemObject(label = "Commerce Order");
+
+			ObjectAdmin.goToActionsTab();
+
+			ObjectAdmin.addObjectActionViaUI(
+				actionLabel = "Action Name",
+				actionName = "ActionName",
+				active = "true",
+				inputMethod = "true",
+				inputValue = "Value Test",
+				objectLabel = "Custom Object 171861",
+				thenAction = "Add an Object Entry",
+				whenAction = "On Order Status Update");
+		}
+
+		task ("And given the user creates a request.") {
+			JSONAccountEntry.addAccountEntry(
+				accountEntryName = "Accounts Name Test",
+				accountEntryType = "Business");
+
+			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
+
+			ApplicationsMenu.gotoSite(site = "Minium");
+
+			FrontStore.addInitializerProductToCart(
+				productName = "U-Joint",
+				productQuantity = "1");
+
+			CommerceCheckout.gotoCheckoutViaMiniCart();
+
+			CommerceCheckout.initializersCheckout(
+				newAddressAddress = "Test Address",
+				newAddressCity = "Test City",
+				newAddressCountry = "United States",
+				newAddressName = "Address Name",
+				newAddressZipCode = "Test Zip Code",
+				productName = "U-Joint",
+				productQuantity = "1",
+				productUnitPrice = "24",
+				shippingMethod = "Standard");
+		}
+
+		task ("When The user changes the order status.") {
+			CommerceNavigator.gotoPortlet(
+				category = "Order Management",
+				portlet = "Orders");
+
+			CommerceNavigator.gotoOrderEntryViaAdmin(status = "Pending");
+
+			Click(
+				key_text = "Accept Order",
+				locator1 = "Link#ANY");
+		}
+
+		task ("Then the action is triggered to add an object entry.") {
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject171861");
+
+			ObjectPortlet.viewEntry(entry = "Value Test");
+		}
+	}
+
+	@description = "LPS-171793 - Verify it's possible to create a notification action with the trigger On Order Status Update"
+	@priority = "5"
+	test CanCreateActionNotificationWithOnOrderStatusUpdate {
+		property portal.acceptance = "true";
+
+		task ("Given: A notification template is created") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				emailBody = "Email Body",
+				entryTo = "test@liferay.com",
+				fromAddress = "test@liferay.com",
+				fromName = "Test test",
+				name = "Notification Template",
+				notificationType = "Email",
+				subject = "Subject");
+
+			PortletEntry.save();
+		}
+
+		task ("And given: A notification action with the trigger On Order Status Update is created") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Commerce Order");
+
+			ObjectAdmin.goToActionsTab();
+
+			ObjectAdmin.addObjectActionViaUI(
+				actionLabel = "Notification action when order status update",
+				active = "true",
+				inputExpression = "orderStatus == 0",
+				notificationName = "Notification Template",
+				thenAction = "Notification",
+				whenAction = "On Order Status Update");
+		}
+
+		task ("And when: an account, minium site and an order is created") {
+			JSONAccountEntry.addAccountEntry(
+				accountEntryName = "Accounts Name",
+				accountEntryType = "Business");
+
+			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
+
+			ApplicationsMenu.gotoSite(site = "Minium");
+
+			FrontStore.addInitializerProductToCart(
+				productName = "U-Joint",
+				productQuantity = "1");
+
+			Refresh();
+
+			CommerceCheckout.gotoCheckout();
+
+			CommerceCheckout.initializersCheckout(
+				newAddressAddress = "Test Address",
+				newAddressCity = "Test City",
+				newAddressCountry = "United States",
+				newAddressName = "Address Name",
+				newAddressZipCode = "Test Zip Code",
+				productName = "U-Joint",
+				productQuantity = "1",
+				productUnitPrice = "24",
+				shippingMethod = "Standard");
+		}
+
+		task ("And when: The order status is updated") {
+			CommerceNavigator.gotoPortlet(
+				category = "Order Management",
+				portlet = "Orders");
+
+			CommerceNavigator.gotoOrderEntryViaAdmin(status = "Pending");
+
+			Click(
+				key_text = "Accept Order",
+				locator1 = "Link#ANY");
+
+			CommerceOrders.createShipment(
+				complement = "Deliver",
+				moveItemQuantitiesInShipment = "true",
+				moveOrderItemsInShipment = "true",
+				productSkuList = "MIN55861",
+				warehouseName = "Italy");
+		}
+
+		task ("Then: The action is triggered and the notification is sent") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Queue");
+
+			AssertElementPresent(
+				key_objectName = "CommerceOrder",
+				locator1 = "ObjectNotifications#OBJECT_QUEUE_NAME");
+		}
 	}
 
 	@description = "LPS-171799 -  Verify it's possible to create a notification action with the trigger On Payment Status Update"
@@ -200,7 +386,8 @@ definition {
 				entryTo = "test@liferay.com",
 				fromAddress = "test@liferay.com",
 				fromName = "Test Test",
-				name = "Notification Template");
+				name = "Notification Template",
+				notificationType = "Email");
 
 			PortletEntry.save();
 		}
@@ -213,7 +400,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				inputExpression = "orderStatus == 1",
 				notificationName = "Notification Template",
@@ -292,7 +480,7 @@ definition {
 
 			ObjectAdmin.assertObjectActions(
 				actionActive = "Yes",
-				actionName = "Custom Action",
+				actionName = "CustomAction",
 				status = "Success");
 
 			ApplicationsMenu.gotoPortlet(
@@ -319,7 +507,8 @@ definition {
 
 		task ("And: The user selects the trigger OnOrderStatusUpdate using the action Groovy Script") {
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Action Name",
+				actionLabel = "Action Label",
+				actionName = "ActionName",
 				active = "true",
 				scriptValidation = "println 'Success'",
 				thenAction = "Groovy Script",
@@ -378,7 +567,7 @@ definition {
 
 			ObjectAdmin.assertObjectActions(
 				actionActive = "Yes",
-				actionName = "Action Name",
+				actionName = "ActionName",
 				status = "Success");
 		}
 	}
@@ -386,6 +575,8 @@ definition {
 	@description = "LPS-156312 - Assert an Action can be created with Expression Builder."
 	@priority = "4"
 	test CanCreateActionWithExpressionBuilder {
+		property test.name.skip.portal.instance = "ObjectActions#CanCreateActionWithExpressionBuilder";
+
 		task ("Given an object with a field is created") {
 			ObjectAdmin.addObjectViaAPI(
 				labelName = "Custom Object",
@@ -411,7 +602,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				inputExpression = "customObjectField == 'Entry Test'",
 				inputMethod = "true",
@@ -438,6 +630,8 @@ definition {
 	@description = "LPS-156569 - Verify that it's possible to create an Action with Groovy Script"
 	@priority = "5"
 	test CanCreateActionWithGroovyScript {
+		property test.name.skip.portal.instance = "ObjectActions#CanCreateActionWithGroovyScript";
+
 		task ("Given a Groovy Script") {
 			var groovyScript = '''
 			import com.liferay.object.model.ObjectEntry;
@@ -493,7 +687,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				objectLabel = "Custom Object",
 				scriptValidation = "${groovyScript}",
@@ -518,6 +713,8 @@ definition {
 	@description = "LPS-161904 - Verify that it's possible to create an object entry using Actions"
 	@priority = "4"
 	test CanCreateEntryWithActions {
+		property test.name.skip.portal.instance = "ObjectActions#CanCreateEntryWithActions";
+
 		task ("Given an object with a field is created") {
 			ObjectAdmin.addObjectViaAPI(
 				labelName = "Custom Object",
@@ -543,7 +740,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				inputMethod = "true",
 				inputValue = "Object entry using Action",
@@ -581,18 +779,19 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080",
 			whenAction = "On After Add");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "Yes",
-			actionName = "Action Name");
+			actionName = "ActionName");
 
-		ObjectAdmin.deleteActionViaUI(actionName = "Action Name");
+		ObjectAdmin.deleteActionViaUI(actionName = "ActionName");
 
-		ObjectAdmin.assertObjectActionsNotPresent(actionName = "Action Name");
+		ObjectAdmin.assertObjectActionsNotPresent(actionName = "ActionName");
 	}
 
 	@description = "LPS-145665 - Verify that you can edit the Action name"
@@ -610,7 +809,8 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Custom Action",
+			actionLabel = "Custom Action",
+			actionName = "CustomAction",
 			active = "true",
 			thenAction = "Webhook",
 			urlAction = "www.liferay.com",
@@ -618,21 +818,23 @@ definition {
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "Yes",
-			actionName = "Custom Action");
+			actionName = "CustomAction");
 
 		ObjectAdmin.editObjectAction(
-			actionName = "New Action Update",
+			actionName = "NewActionUpdate",
 			active = "false",
-			viewEntry = "Custom Action");
+			viewEntry = "CustomAction");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "No",
-			actionName = "New Action Update");
+			actionName = "NewActionUpdate");
 	}
 
 	@description = "LPS-156560 - Verify that it's possible to edit an Action with Groovy Script"
 	@priority = "5"
 	test CanEditActionWithGroovyScript {
+		property test.name.skip.portal.instance = "ObjectActions#CanEditActionWithGroovyScript";
+
 		task ("Given a Groovy Script") {
 			var groovyScript = '''
 			import com.liferay.object.model.ObjectEntry;
@@ -693,7 +895,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				objectLabel = "Custom Object",
 				scriptValidation = "${groovyScript}",
@@ -705,7 +908,7 @@ definition {
 			ObjectAdmin.editObjectAction(
 				click = "save",
 				inputExpression = "customObjectField == 'Entry Update'",
-				viewEntry = "Custom Action");
+				viewEntry = "CustomAction");
 		}
 
 		task ("Then the object entry name is updated when the condition is met") {
@@ -725,6 +928,7 @@ definition {
 	@priority = "5"
 	test CanEditExpression {
 		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "ObjectActions#CanEditExpression";
 
 		task ("Add an Object, Field and Action") {
 			ObjectAdmin.addObjectViaAPI(
@@ -749,7 +953,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				inputExpression = "customObjectField == 'Entry Test'",
 				inputMethod = "true",
@@ -779,7 +984,7 @@ definition {
 
 			ObjectAdmin.editObjectAction(
 				inputExpression = "customObjectField == 'Entry Test Updated'",
-				viewEntry = "Custom Action");
+				viewEntry = "CustomAction");
 
 			ObjectAdmin.addObjectSingleFieldEntryViaAPI(
 				fieldName = "customObjectField",
@@ -798,6 +1003,7 @@ definition {
 	@priority = "5"
 	test CanEnableAndDisableCondition {
 		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "ObjectActions#CanEnableAndDisableCondition";
 
 		task ("Add object, field, and publish then") {
 			ObjectAdmin.addObjectViaAPI(
@@ -824,7 +1030,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				inputExpression = "customObjectField == 'Entry with condition'",
 				inputMethod = "true",
@@ -835,7 +1042,7 @@ definition {
 
 			ObjectAdmin.assertObjectActions(
 				actionActive = "Yes",
-				actionName = "Custom Action");
+				actionName = "CustomAction");
 		}
 
 		task ("Add entry and assert that condition it's works") {
@@ -858,13 +1065,13 @@ definition {
 
 			ObjectAdmin.goToActionsTab();
 
-			ObjectAdmin.goToActionDetails(viewEntry = "Custom Action");
+			ObjectAdmin.goToActionDetails(viewEntry = "CustomAction");
 
 			ObjectAdmin.disableCondition();
 
 			ObjectAdmin.assertObjectActions(
 				actionActive = "Yes",
-				actionName = "Custom Action");
+				actionName = "CustomAction");
 		}
 	}
 
@@ -883,18 +1090,19 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080",
 			whenAction = "On After Add");
 
 		ObjectAdmin.editObjectAction(
 			active = "false",
-			viewEntry = "Action Name");
+			viewEntry = "ActionName");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "No",
-			actionName = "Action Name");
+			actionName = "ActionName");
 	}
 
 	@description = "LPS-139008 - Verify it is not possible to leave the Action Name field blank"
@@ -914,6 +1122,8 @@ definition {
 		ObjectAdmin.gotoAddObjectAction();
 
 		ObjectAdmin.fillObjectAction(
+			actionLabel = "Action Label",
+			actionName = "",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080",
 			whenAction = "On After Add");
@@ -946,7 +1156,8 @@ definition {
 		ObjectAdmin.gotoAddObjectAction();
 
 		ObjectAdmin.fillObjectAction(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			whenAction = "On After Add");
 
 		Button.clickSave();
@@ -973,7 +1184,8 @@ definition {
 		ObjectAdmin.gotoAddObjectAction();
 
 		ObjectAdmin.fillObjectAction(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080");
 
@@ -1001,7 +1213,8 @@ definition {
 		ObjectAdmin.gotoAddObjectAction();
 
 		ObjectAdmin.fillObjectAction(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			thenAction = "Webhook",
 			whenAction = "On After Add");
 
@@ -1013,6 +1226,8 @@ definition {
 	@description = "LPS-156319 - Verify that the Expression Builder field is required"
 	@priority = "3"
 	test CannotSaveWithoutExpressionBuilder {
+		property test.name.skip.portal.instance = "ObjectActions#CannotSaveWithoutExpressionBuilder";
+
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object",
 			objectName = "CustomObject",
@@ -1035,7 +1250,8 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Custom Action",
+			actionLabel = "Custom Action",
+			actionName = "CustomAction",
 			active = "true",
 			inputExpression = "",
 			notRefreshAttribute = "true",
@@ -1067,7 +1283,8 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			active = "false",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080",
@@ -1075,11 +1292,11 @@ definition {
 
 		ObjectAdmin.editObjectAction(
 			active = "true",
-			viewEntry = "Action Name");
+			viewEntry = "ActionName");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "Yes",
-			actionName = "Action Name");
+			actionName = "ActionName");
 	}
 
 	@description = "LPS-139008 - Verify it is possible to search for an Action"
@@ -1098,23 +1315,26 @@ definition {
 
 		for (var actionsNames : list "1,2") {
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Action Name ${actionsNames}",
+				actionLabel = "Action Label ${actionsNames}",
+				actionName = "ActionName${actionsNames}",
 				thenAction = "Webhook",
 				urlAction = "http://localhost:8080",
 				whenAction = "On After Add");
 		}
 
-		Search.searchCP(searchTerm = "1");
+		Search.searchCP(searchTerm = "ActionName1");
 
-		ObjectAdmin.assertObjectActions(actionName = "Action Name 1");
+		ObjectAdmin.assertObjectActions(actionName = "ActionName1");
 
-		ObjectAdmin.assertObjectActionsNotPresent(actionName = "Action Name 2");
+		ObjectAdmin.assertObjectActionsNotPresent(actionName = "ActionName2");
 	}
 
 	@description = "LPS-156343 - Verify that Action can be triggered after disabling the expression"
 	@priority = "4"
 	test CanTriggerActionAfterDisablingExpression {
 		task ("Given an object with a field is created") {
+			property test.name.skip.portal.instance = "ObjectActions#CanTriggerActionAfterDisablingExpression";
+
 			ObjectAdmin.addObjectViaAPI(
 				labelName = "Custom Object",
 				objectName = "CustomObject",
@@ -1140,7 +1360,8 @@ definition {
 
 			ObjectAdmin.addObjectActionViaUI(
 				actionDescription = "Custom Description",
-				actionName = "Custom Action Name",
+				actionLabel = "Custom Action Label",
+				actionName = "CustomActionName",
 				active = "true",
 				inputExpression = "customObjectField == 'Entry Test'",
 				inputMethod = "true",
@@ -1168,7 +1389,7 @@ definition {
 
 			ObjectAdmin.goToActionsTab();
 
-			ObjectAdmin.goToActionDetails(viewEntry = "Custom Action Name");
+			ObjectAdmin.goToActionDetails(viewEntry = "CustomActionName");
 
 			ObjectAdmin.disableCondition();
 
@@ -1220,7 +1441,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Action Name",
+				actionLabel = "Action Label",
+				actionName = "ActionName",
 				active = "true",
 				scriptValidation = "print 'Success'",
 				thenAction = "Groovy Script",
@@ -1251,22 +1473,23 @@ definition {
 		ObjectAdmin.goToActionsTab();
 
 		ObjectAdmin.addObjectActionViaUI(
-			actionName = "Action Name",
+			actionLabel = "Action Label",
+			actionName = "ActionName",
 			thenAction = "Webhook",
 			urlAction = "http://localhost:8080",
 			whenAction = "On After Add");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "Yes",
-			actionName = "Action Name");
+			actionName = "ActionName");
 
 		ObjectAdmin.editObjectAction(
-			actionName = "Update Action Name",
-			viewEntry = "Action Name");
+			actionName = "UpdateActionName",
+			viewEntry = "ActionName");
 
 		ObjectAdmin.assertObjectActions(
 			actionActive = "Yes",
-			actionName = "Update Action Name");
+			actionName = "UpdateActionName");
 	}
 
 	@description = "LPS-156346 - Verify that the expression works with Groovy Script."
@@ -1299,7 +1522,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Action Name",
+				actionLabel = "Action Label",
+				actionName = "ActionName",
 				active = "true",
 				inputExpression = "customInteger == 5",
 				scriptValidation = "println 'Success'",
@@ -1317,7 +1541,7 @@ definition {
 
 			ObjectAdmin.assertObjectActions(
 				actionActive = "Yes",
-				actionName = "Action Name",
+				actionName = "ActionName",
 				status = "Success");
 		}
 	}
@@ -1352,7 +1576,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Action Name",
+				actionLabel = "Action Label",
+				actionName = "ActionName",
 				active = "true",
 				inputExpression = "customObjectField == 'Entry Test'",
 				thenAction = "Webhook",
@@ -1370,7 +1595,7 @@ definition {
 
 			ObjectAdmin.assertObjectActions(
 				actionActive = "Yes",
-				actionName = "Action Name",
+				actionName = "ActionName",
 				status = "Success");
 		}
 	}
@@ -1418,7 +1643,8 @@ definition {
 			ObjectAdmin.gotoAddObjectAction();
 
 			ObjectAdmin.fillObjectAction(
-				actionName = "Action name",
+				actionLabel = "Action Label",
+				actionName = "ActionName",
 				whenAction = "On Subscription Status Update");
 		}
 

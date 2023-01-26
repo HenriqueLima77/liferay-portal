@@ -32,6 +32,7 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.system.SystemObjectDefinitionMetadataRegistry;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.vulcan.batch.engine.Field;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
@@ -51,7 +52,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -81,7 +81,7 @@ public class ObjectEntryOpenAPIResourceImpl
 
 		Map<String, Schema> schemas = components.getSchemas();
 
-		Schema schema = schemas.get(_objectDefinition.getShortName());
+		Schema schema = schemas.get(objectDefinition.getShortName());
 
 		if (schema == null) {
 			return Collections.emptyMap();
@@ -98,16 +98,10 @@ public class ObjectEntryOpenAPIResourceImpl
 			String propertyName = schemaEntry.getKey();
 			Schema propertySchema = schemaEntry.getValue();
 
-			if (Optional.ofNullable(
-					propertySchema.getReadOnly()
-				).orElse(
-					false
-				) ||
-				Optional.ofNullable(
-					propertySchema.getWriteOnly()
-				).orElse(
-					false
-				) || propertyName.startsWith("x-")) {
+			if ((propertySchema == null) ||
+				GetterUtil.getBoolean(propertySchema.getReadOnly()) ||
+				GetterUtil.getBoolean(propertySchema.getWriteOnly()) ||
+				propertyName.startsWith("x-")) {
 
 				continue;
 			}
@@ -116,18 +110,10 @@ public class ObjectEntryOpenAPIResourceImpl
 				propertyName,
 				Field.of(
 					propertySchema.getDescription(), propertyName,
-					Optional.ofNullable(
-						propertySchema.getReadOnly()
-					).orElse(
-						false
-					),
+					GetterUtil.getBoolean(propertySchema.getReadOnly()),
 					requiredPropertySchemaNames.contains(propertyName),
 					propertySchema.getType(),
-					Optional.ofNullable(
-						propertySchema.getWriteOnly()
-					).orElse(
-						false
-					)));
+					GetterUtil.getBoolean(propertySchema.getWriteOnly())));
 		}
 
 		return fields;
@@ -138,16 +124,14 @@ public class ObjectEntryOpenAPIResourceImpl
 			ObjectDefinition objectDefinition, String type, UriInfo uriInfo)
 		throws Exception {
 
-		_objectDefinition = objectDefinition;
-
 		return _openAPIResource.getOpenAPI(
 			new ObjectEntryOpenAPIContributor(
 				_bundleContext, _dtoConverterRegistry,
-				_objectActionLocalService, _objectDefinition,
+				_objectActionLocalService, objectDefinition,
 				_objectDefinitionLocalService, this,
 				_objectRelationshipLocalService, _openAPIResource,
 				_systemObjectDefinitionMetadataRegistry),
-			_getOpenAPISchemaFilter(_objectDefinition.getRESTContextPath()),
+			_getOpenAPISchemaFilter(objectDefinition),
 			new HashSet<Class<?>>() {
 				{
 					add(ObjectEntryRelatedObjectsResourceImpl.class);
@@ -214,11 +198,12 @@ public class ObjectEntryOpenAPIResourceImpl
 	}
 
 	private OpenAPISchemaFilter _getOpenAPISchemaFilter(
-		String applicationPath) {
+		ObjectDefinition objectDefinition) {
 
 		OpenAPISchemaFilter openAPISchemaFilter = new OpenAPISchemaFilter();
 
-		openAPISchemaFilter.setApplicationPath(applicationPath);
+		openAPISchemaFilter.setApplicationPath(
+			objectDefinition.getRESTContextPath());
 
 		DTOProperty dtoProperty = new DTOProperty(
 			new HashMap<>(), "ObjectEntry", "Object");
@@ -227,7 +212,7 @@ public class ObjectEntryOpenAPIResourceImpl
 
 		for (ObjectField objectField :
 				_objectFieldLocalService.getObjectFields(
-					_objectDefinition.getObjectDefinitionId())) {
+					objectDefinition.getObjectDefinitionId())) {
 
 			dtoProperties.add(_getDTOProperty(objectField));
 
@@ -274,11 +259,11 @@ public class ObjectEntryOpenAPIResourceImpl
 			TreeMapBuilder.<String, String>create(
 				Collections.reverseOrder()
 			).put(
-				"ObjectEntry", _objectDefinition.getShortName()
+				"ObjectEntry", objectDefinition.getShortName()
 			).put(
-				"PageObject", "Page" + _objectDefinition.getShortName()
+				"PageObject", "Page" + objectDefinition.getShortName()
 			).put(
-				"PageObjectEntry", "Page" + _objectDefinition.getShortName()
+				"PageObjectEntry", "Page" + objectDefinition.getShortName()
 			).build());
 
 		return openAPISchemaFilter;
@@ -301,8 +286,6 @@ public class ObjectEntryOpenAPIResourceImpl
 
 	@Reference
 	private ObjectActionLocalService _objectActionLocalService;
-
-	private ObjectDefinition _objectDefinition;
 
 	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;

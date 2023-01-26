@@ -56,19 +56,44 @@ definition {
 
 			Pause(locator1 = "19000");
 
-			if (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "Message#ERROR_DISMISSIBLE")) {
+			if (IsElementPresent.isElementPresentNoSPARefresh(key_type = "dismissible alert-danger", locator1 = "ClayAlertToast#ALERT_TOAST")) {
 
 				// For LPS-170578, need this to pause longer than the auto close time of the fail message
 
 				Pause(locator1 = "1100");
 
-				if (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "Message#ERROR_DISMISSIBLE")) {
+				if (IsElementPresent.isElementPresentNoSPARefresh(key_type = "dismissible alert-danger", locator1 = "ClayAlertToast#ALERT_TOAST")) {
 					fail("Alert message did not disappear after 20 seconds");
 				}
 			}
 			else {
 				fail("Alert message disappeared before 20 seconds");
 			}
+		}
+	}
+
+	@description = "LPS-170575 - Verify toast alert with no actions disappears after 5 seconds"
+	@priority = "5"
+	test DisappearsAfter5SecsWithoutActions {
+		task ("When a toast alert appears") {
+			Click(
+				key_text = "DisappearsAfter5Secs",
+				locator1 = "Button#ANY");
+		}
+
+		task ("And When no actions on alert") {
+			VerifyElementNotPresent(locator1 = "//*[@id='ToastAlertContainer']//a");
+		}
+
+		task ("Then the alert disappears after 5 secs") {
+
+			// For LPS-170575, need this pause to see if after 5 seconds, the alert is not showing anymore
+
+			Pause(locator1 = "5000");
+
+			AssertElementNotPresent(
+				key_type = "dismissible alert-danger",
+				locator1 = "ClayAlertToast#ALERT_TOAST");
 		}
 	}
 

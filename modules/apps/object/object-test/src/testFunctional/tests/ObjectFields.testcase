@@ -158,7 +158,8 @@ definition {
 			ObjectAdmin.goToActionsTab();
 
 			ObjectAdmin.addObjectActionViaUI(
-				actionName = "Custom Action",
+				actionLabel = "Custom Action",
+				actionName = "CustomAction",
 				active = "true",
 				inputMethod = "true",
 				inputValue = "Action shot on add",
@@ -418,7 +419,7 @@ definition {
 				fieldLabelName = "Custom Object 162140",
 				pluralLabelName = "Custom Objects 162140");
 
-			ObjectAdmin.saveCustomObject();
+			CreateObject.saveObject();
 		}
 
 		task ("Go to Custom Object > Fields") {
@@ -579,6 +580,8 @@ definition {
 		}
 
 		task ("Go to Custom Object entries and add an entry") {
+			Navigator.openURL();
+
 			ApplicationsMenu.gotoPortlet(
 				category = "Object",
 				panel = "Control Panel",
@@ -716,7 +719,6 @@ definition {
 	}
 
 	@description = "LPS-149625 - Verify that it's possible to delete an aggregation field"
-	@ignore = "true"
 	@priority = "4"
 	test CanDeleteAggregationField {
 		task ("Create Custom Object and Custom Relationship itself (via API)") {
@@ -816,7 +818,6 @@ definition {
 	}
 
 	@description = "LPS-149625 - Verify that it's possible to edit an aggregation field"
-	@ignore = "true"
 	@priority = "4"
 	test CanEditAggregationField {
 		task ("Create Custom Object and Custom Relationship itself (via API)") {
@@ -899,7 +900,6 @@ definition {
 	}
 
 	@description = "LPS-148112 - Verify that admin can edit the Storage Folder path in Published objects"
-	@ignore = "true"
 	@priority = "4"
 	test CanEditPublishedObjectStorageFolder {
 		task ("Add new Custom Object scoped by site (via API)") {
@@ -1564,7 +1564,6 @@ definition {
 	}
 
 	@description = "LPS-158821 - Verify that the user is able to use the ERC field in Sort, on the Custom Views tab"
-	@ignore = "true"
 	@priority = "4"
 	test CanSortWithERCField {
 		task ("Create Custom Object and Custom Field (via API)") {
@@ -1873,6 +1872,93 @@ definition {
 				customField = "Custom Field",
 				entry = "Entry Test",
 				invalidEntry = "true");
+
+			AssertTextEquals.assertPartialText(
+				locator1 = "Message#ERROR",
+				value1 = "This entry is not possible.");
+		}
+	}
+
+	@description = "LPS-162178 - Verify that the user is able to use the ERC field in Groovy Scripts, on the Validations tab"
+	@priority = "5"
+	test CanUseERCFieldWithGroovyScript {
+		property portal.acceptance = "true";
+
+		task ("Given: An object with a field is created") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 162178",
+				objectName = "CustomObject162178",
+				pluralLabelName = "Custom Objects 162178");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Text",
+				fieldLabelName = "Custom Field",
+				fieldName = "customObjectField",
+				fieldType = "String",
+				isRequired = "false",
+				objectName = "CustomObject162178");
+
+			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject162178");
+		}
+
+		task ("And: Add a Custom Validation using a Groovy Script") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object 162178");
+
+			ObjectAdmin.goToValidationsTab();
+
+			ObjectCustomValidation.addObjectValidation(
+				validationName = "Custom Validation",
+				validationType = "Groovy");
+
+			ObjectCustomValidation.gotoCustomValidation(validationName = "Custom Validation");
+
+			ObjectCustomValidation.activeValidation();
+
+			ObjectCustomValidation.gotoTab(tabName = "Conditions");
+
+			ObjectCustomValidation.insertScriptOnValidation(scriptValidation = "invalidFields = (customObjectField == externalReferenceCode)");
+
+			ObjectCustomValidation.addErrorMessage(errorMessage = "This entry is not possible.");
+
+			PortletEntry.save();
+		}
+
+		task ("When: Create Custom View, mark Custom View as default, go to View Builder and add ERC") {
+			ObjectCustomViews.goToViewsTab();
+
+			ObjectCustomViews.addObjectViewViaUI(viewName = "Custom Views");
+
+			ObjectCustomViews.goToViewsDetails(label = "Custom Views");
+
+			ObjectCustomViews.markViewAsDefault();
+
+			ObjectCustomViews.goToViewsBuilderTab();
+
+			ObjectCustomViews.addColumnsViaUI(addColumns = "Custom Field,External Reference Code");
+
+			PortletEntry.save();
+		}
+
+		task ("Then: Assert the error message display") {
+			ObjectAdmin.addObjectSingleFieldEntryViaAPI(
+				fieldName = "customObjectField",
+				objectName = "CustomObject162178",
+				value = "Entry Test");
+
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject162178");
+
+			ObjectPortlet.viewEntry(entry = "Entry Test");
+
+			ObjectPortlet.assertEntryColumnPresent(column = "External Reference Code");
+
+			var externalReferenceCodeId = selenium.getText("//div[contains(@class,'dnd-tbody')]//*[contains(text(),'Entry Test')]/parent::div/following-sibling::div//a");
+
+			ObjectPortlet.updateEntry(
+				entry = "Entry Test",
+				invalidEntry = "true",
+				updateEntry = "${externalReferenceCodeId}");
 
 			AssertTextEquals.assertPartialText(
 				locator1 = "Message#ERROR",
@@ -2278,6 +2364,65 @@ definition {
 		Click(locator1 = "ObjectField#TYPE_FIELD");
 
 		ObjectAdmin.viewDescriptionForEachFieldType();
+	}
+
+	@description = "LPS-145661 - Verify that the field type names are displayed on the Layout Builder when a field is added"
+	@priority = "4"
+	test DisplayFieldTypesOnLayoutBuilder {
+		task ("Given that an object and fields are created for that object") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 161905",
+				objectName = "CustomObject161905",
+				pluralLabelName = "Custom Objects 161905");
+
+			for (var valueField : list "A,B") {
+				ObjectAdmin.addObjectFieldViaAPI(
+					fieldBusinessType = "Text",
+					fieldLabelName = "Custom Field ${valueField}",
+					fieldName = "customObjectField${valueField}",
+					fieldType = "String",
+					isRequired = "false",
+					objectName = "CustomObject161905");
+			}
+		}
+
+		task ("When a Layout is added to the object") {
+			ObjectAdmin.addObjectLayoutViaAPI(
+				layoutName = "Layout Test",
+				objectName = "CustomObject161905");
+
+			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject161905");
+
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object 161905");
+
+			ObjectAdmin.goToLayoutsTab();
+
+			ObjectAdmin.selectSpecificKebabMenuOption(
+				kebabOption = "View",
+				objectLabel = "Layout Test");
+
+			ObjectAdmin.markLayoutAsDefault();
+
+			ObjectAdmin.goToLayoutTabOnLayouts();
+
+			for (var valueField : list "A,B") {
+				ObjectAdmin.addTabFieldsOnLayout(
+					blockName = "Block Test",
+					columnsNumber = "1",
+					fieldList = "Custom Field ${valueField}",
+					tabName = "Tab Test");
+			}
+		}
+
+		task ("Then the field type names are displayed on the Layout Builder when a field is added") {
+			for (var fieldLabelName : list "Custom Field A,Custom Field B") {
+				AssertElementPresent(
+					key_fieldLabelName = "${fieldLabelName}",
+					locator1 = "CreateObject#FIELD_ADDED_ON_BLOCK");
+			}
+		}
 	}
 
 	@description = "LPS-146523 - Verify if the default folder will be the Documents and Media Home Folder of that specific site"

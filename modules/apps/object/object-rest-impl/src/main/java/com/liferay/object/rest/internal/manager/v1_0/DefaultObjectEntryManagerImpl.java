@@ -16,6 +16,7 @@ package com.liferay.object.rest.internal.manager.v1_0;
 
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectConstants;
 import com.liferay.object.constants.ObjectDefinitionConstants;
@@ -53,6 +54,9 @@ import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -80,7 +84,6 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.search.aggregation.Aggregations;
@@ -247,6 +250,31 @@ public class DefaultObjectEntryManagerImpl
 		_checkObjectEntryObjectDefinitionId(objectDefinition, objectEntry);
 
 		_objectEntryService.deleteObjectEntry(objectEntry.getObjectEntryId());
+	}
+
+	@Override
+	public void executeObjectAction(
+			DTOConverterContext dtoConverterContext, String objectActionName,
+			ObjectDefinition objectDefinition, long objectEntryId)
+		throws Exception {
+
+		_executeObjectAction(
+			dtoConverterContext, objectActionName, objectDefinition,
+			_objectEntryLocalService.getObjectEntry(objectEntryId));
+	}
+
+	@Override
+	public void executeObjectAction(
+			long companyId, DTOConverterContext dtoConverterContext,
+			String externalReferenceCode, String objectActionName,
+			ObjectDefinition objectDefinition, String scopeKey)
+		throws Exception {
+
+		_executeObjectAction(
+			dtoConverterContext, objectActionName, objectDefinition,
+			_objectEntryLocalService.getObjectEntry(
+				externalReferenceCode, companyId,
+				getGroupId(objectDefinition, scopeKey)));
 	}
 
 	@Override
@@ -682,6 +710,46 @@ public class DefaultObjectEntryManagerImpl
 		return serviceContext;
 	}
 
+	private void _executeObjectAction(
+			DTOConverterContext dtoConverterContext, String objectActionName,
+			ObjectDefinition objectDefinition,
+			com.liferay.object.model.ObjectEntry objectEntry)
+		throws Exception {
+
+		_objectEntryService.checkModelResourcePermission(
+			objectDefinition.getObjectDefinitionId(),
+			objectEntry.getObjectEntryId(), objectActionName);
+
+		_objectActionEngine.executeObjectAction(
+			objectActionName, ObjectActionTriggerConstants.KEY_STANDALONE,
+			objectDefinition.getObjectDefinitionId(),
+			JSONUtil.put(
+				"classPK", objectEntry.getObjectEntryId()
+			).put(
+				"objectEntry",
+				HashMapBuilder.putAll(
+					objectEntry.getModelAttributes()
+				).put(
+					"values", objectEntry.getValues()
+				).build()
+			).put(
+				"objectEntryDTO" + objectDefinition.getShortName(),
+				() -> {
+					dtoConverterContext.setAttribute(
+						"addActions", Boolean.FALSE);
+
+					JSONObject jsonObject = _jsonFactory.createJSONObject(
+						_jsonFactory.looseSerializeDeep(
+							_toObjectEntry(
+								dtoConverterContext, objectDefinition,
+								objectEntry)));
+
+					return jsonObject.toMap();
+				}
+			),
+			dtoConverterContext.getUserId());
+	}
+
 	private String _getObjectEntriesPermissionName(long objectDefinitionId) {
 		return ObjectConstants.RESOURCE_NAME + "#" + objectDefinitionId;
 	}
@@ -960,22 +1028,18 @@ public class DefaultObjectEntryManagerImpl
 					dtoConverterContext.getUriInfo())
 			).build();
 
-			if (GetterUtil.getBoolean(
-					PropsUtil.get("feature.flag.LPS-148804"))) {
+			for (ObjectAction objectAction :
+					_objectActionLocalService.getObjectActions(
+						objectDefinition.getObjectDefinitionId(),
+						ObjectActionTriggerConstants.KEY_STANDALONE)) {
 
-				for (ObjectAction objectAction :
-						_objectActionLocalService.getObjectActions(
-							objectDefinition.getObjectDefinitionId(),
-							ObjectActionTriggerConstants.KEY_STANDALONE)) {
-
-					actions.put(
+				actions.put(
+					objectAction.getName(),
+					_addAction(
 						objectAction.getName(),
-						_addAction(
-							ActionKeys.VIEW,
-							"putByExternalReferenceCodeObjectEntryExternal" +
-								"ReferenceCodeObjectActionObjectActionName",
-							objectEntry, dtoConverterContext.getUriInfo()));
-				}
+						"putByExternalReferenceCodeObjectEntryExternal" +
+							"ReferenceCodeObjectActionObjectActionName",
+						objectEntry, dtoConverterContext.getUriInfo()));
 			}
 		}
 
@@ -1080,6 +1144,12 @@ public class DefaultObjectEntryManagerImpl
 
 	@Reference
 	private FilterPredicateFactory _filterPredicateFactory;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private ObjectActionEngine _objectActionEngine;
 
 	@Reference
 	private ObjectActionLocalService _objectActionLocalService;

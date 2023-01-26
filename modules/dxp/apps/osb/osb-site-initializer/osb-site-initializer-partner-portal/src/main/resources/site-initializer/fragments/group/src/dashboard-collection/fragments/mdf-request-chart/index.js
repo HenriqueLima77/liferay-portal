@@ -10,7 +10,6 @@
  */
 
 import ClayButton from '@clayui/button';
-import ClayLoadingIndicator from '@clayui/loading-indicator';
 import React, {useEffect, useState} from 'react';
 
 import Container from '../../common/components/container';
@@ -42,7 +41,7 @@ export default function () {
 		setLoading(true);
 		// eslint-disable-next-line @liferay/portal/no-global-fetch
 		const response = await fetch(
-			`/o/c/mdfrequests?nestedFields=accountEntry,mdfRequestToActivities,activityToBudgets,mdfRequestToMdfClaims&nestedFieldsDepth=2&pageSize=9999&filter=mdfRequestStatus ne 'draft'`,
+			`/o/c/mdfrequests?nestedFields=accountEntry,mdfReqToActs,actToBgts,mdfReqToMDFClms&nestedFieldsDepth=2&pageSize=9999&filter=mdfRequestStatus ne 'draft'`,
 			{
 				headers: {
 					'accept': 'application/json',
@@ -83,22 +82,10 @@ export default function () {
 
 	return (
 		<Container
-			className="mdf-request-chart-card-height"
 			footer={
 				<>
 					<ClayButton
-						className="mr-4"
-						displayType="primary"
-						onClick={() =>
-							Liferay.Util.navigate(
-								`${siteURL}/marketing/mdf-requests/new`
-							)
-						}
-					>
-						New MDF Request
-					</ClayButton>
-					<ClayButton
-						className="border-brand-primary-darken-1 text-brand-primary-darken-1"
+						className="border-brand-primary-darken-1 mr-4 text-brand-primary-darken-1"
 						displayType="secondary"
 						onClick={() =>
 							Liferay.Util.navigate(
@@ -108,15 +95,24 @@ export default function () {
 					>
 						View all
 					</ClayButton>
+
+					<ClayButton
+						displayType="primary"
+						onClick={() =>
+							Liferay.Util.navigate(
+								`${siteURL}/marketing/mdf-requests/new`
+							)
+						}
+					>
+						New MDF Request
+					</ClayButton>
 				</>
 			}
-			positionButton
 			title="Market Development Funds"
 		>
-			{loading && <ClayLoadingIndicator className="mt-10" size="md" />}
-
 			<DonutChart
 				chartData={chartData}
+				isLoading={loading}
 				titleChart={titleChart}
 				valueChart={valueChart}
 			/>

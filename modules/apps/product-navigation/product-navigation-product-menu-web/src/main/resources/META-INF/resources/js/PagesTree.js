@@ -16,10 +16,12 @@ import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
 import {TreeView as ClayTreeView} from '@clayui/core';
 import {ClayDropDownWithItems} from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
-import {fetch, openModal, openToast} from 'frontend-js-web';
+import {fetch, navigate, openModal, openToast} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 
+const ACTION_COPY_PAGE = 'copy-page';
+const ACTION_DELETE = 'delete';
 const ENTER_KEYCODE = 13;
 const ROOT_ITEM_ID = '0';
 const NOT_DROPPABLE_TYPES = ['url', 'link_to_layout'];
@@ -34,7 +36,7 @@ export default function PagesTree({
 	const {loadMoreItemsURL, maxPageSize, moveItemURL, namespace} = config;
 
 	const onLoadMore = useCallback(
-		(item, initialCursor = 1) => {
+		(item) => {
 			if (!item.hasChildren) {
 				return Promise.resolve({
 					cursor: null,
@@ -42,12 +44,16 @@ export default function PagesTree({
 				});
 			}
 
-			const cursor = item.children ? initialCursor : 0;
+			const cursor = item.children
+				? Math.floor(item.children.length / maxPageSize)
+				: 0;
 
 			return fetch(loadMoreItemsURL, {
 				body: Liferay.Util.objectToURLSearchParams({
 					[`${namespace}parentLayoutId`]: item.layoutId,
 					[`${namespace}privateLayout`]: isPrivateLayoutsTree,
+					[`${namespace}redirect`]:
+						window.location.pathname + window.location.search,
 					[`${namespace}selPlid`]: item.plid,
 					[`${namespace}start`]: cursor * maxPageSize,
 				}),
@@ -125,7 +131,7 @@ function TreeItem({config, expand, item, load, namespace, selectedLayoutId}) {
 	const itemAnchorRef = useRef(null);
 
 	return (
-		<ClayTreeView.Item
+		<TreeItemChild
 			actions={
 				!config.stagingEnabled &&
 				item.actions && (
@@ -143,6 +149,8 @@ function TreeItem({config, expand, item, load, namespace, selectedLayoutId}) {
 					/>
 				)
 			}
+			item={item}
+			selectedLayoutId={selectedLayoutId}
 		>
 			<ClayTreeView.ItemStack
 				active={selectedLayoutId === item.id ? 'true' : null}
@@ -176,7 +184,7 @@ function TreeItem({config, expand, item, load, namespace, selectedLayoutId}) {
 
 			<ClayTreeView.Group items={item.children}>
 				{(item) => (
-					<ClayTreeView.Item
+					<TreeItemChild
 						actions={
 							!config.stagingEnabled && (
 								<ClayDropDownWithItems
@@ -198,6 +206,7 @@ function TreeItem({config, expand, item, load, namespace, selectedLayoutId}) {
 						}
 						active={selectedLayoutId === item.id ? 'true' : null}
 						expandable={item.hasChildren}
+						item={item}
 						onKeyDown={(event) => {
 							if (
 								event.keyCode === ENTER_KEYCODE &&
@@ -206,6 +215,7 @@ function TreeItem({config, expand, item, load, namespace, selectedLayoutId}) {
 								itemAnchorRef.current.click();
 							}
 						}}
+						selectedLayoutId={selectedLayoutId}
 					>
 						{item.icon && <ClayIcon symbol={item.icon} />}
 
@@ -226,7 +236,7 @@ function TreeItem({config, expand, item, load, namespace, selectedLayoutId}) {
 								<span>{item.name}</span>
 							)}
 						</div>
-					</ClayTreeView.Item>
+					</TreeItemChild>
 				)}
 			</ClayTreeView.Group>
 
@@ -242,7 +252,7 @@ function TreeItem({config, expand, item, load, namespace, selectedLayoutId}) {
 						{Liferay.Language.get('load-more-results')}
 					</ClayButton>
 				)}
-		</ClayTreeView.Item>
+		</TreeItemChild>
 	);
 }
 
@@ -253,6 +263,22 @@ TreeItem.propTypes = {
 	namespace: PropTypes.string.isRequired,
 	selectedLayoutId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
+
+function TreeItemChild({item, selectedLayoutId, ...props}) {
+	const itemRef = useRef(null);
+
+	useEffect(() => {
+		if (item.id === selectedLayoutId && itemRef.current) {
+			itemRef.current.scrollIntoView({
+				behavior: 'auto',
+				block: 'center',
+				inline: 'center',
+			});
+		}
+	}, [item.id, selectedLayoutId]);
+
+	return <ClayTreeView.Item {...props} ref={itemRef} />;
+}
 
 function normalizeActions(actions, namespace) {
 	return actions.map((group) => ({
@@ -266,11 +292,58 @@ function normalizeActions(actions, namespace) {
 				nextItem.onClick = (event) => {
 					event.preventDefault();
 
-					openModal({
+					let modalData = {
 						id: `${namespace}pagesTreeModal`,
 						title: item.data.modalTitle,
 						url: item.data.url,
-					});
+					};
+
+					if (item.id === ACTION_DELETE) {
+						delete modalData.url;
+
+						modalData = {
+							...modalData,
+							bodyHTML: item.data.message,
+							buttons: [
+								{
+									autoFocus: true,
+									displayType: 'secondary',
+									label: Liferay.Language.get('cancel'),
+									type: 'cancel',
+								},
+								{
+									displayType: 'danger',
+									label: Liferay.Language.get('delete'),
+									onClick: ({processClose}) => {
+										processClose();
+
+										fetch(item.data.url, {
+											method: 'post',
+										})
+											.then((response) => {
+												if (response.redirected) {
+													navigate(response.url);
+												}
+											})
+											.catch(() => openErrorToast());
+									},
+								},
+							],
+							status: 'danger',
+						};
+					}
+					else if (item.id === ACTION_COPY_PAGE) {
+						modalData = {
+							...modalData,
+							containerProps: {
+								className: 'cadmin copy-page-modal',
+							},
+							id: 'addLayoutDialog',
+							size: 'md',
+						};
+					}
+
+					openModal(modalData);
 				};
 			}
 

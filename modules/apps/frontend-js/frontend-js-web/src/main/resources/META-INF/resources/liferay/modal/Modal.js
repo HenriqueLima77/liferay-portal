@@ -44,6 +44,7 @@ const Modal = ({
 	iframeProps = {},
 	onClose,
 	onOpen,
+	role = 'dialog',
 	size,
 	status,
 	title,
@@ -135,7 +136,7 @@ const Modal = ({
 
 		return (
 			<div className="liferay-modal-body" ref={bodyRef}>
-				{BodyComponent && <BodyComponent />}
+				{BodyComponent && <BodyComponent closeModal={processClose} />}
 			</div>
 		);
 	};
@@ -191,7 +192,7 @@ const Modal = ({
 					disableAutoClose={disableAutoClose}
 					id={id}
 					observer={observer}
-					role="dialog"
+					role={role}
 					size={url && !size ? 'full-screen' : size}
 					status={status}
 					zIndex={zIndex}
@@ -673,6 +674,7 @@ Modal.propTypes = {
 	buttons: PropTypes.arrayOf(
 		PropTypes.shape({
 			displayType: PropTypes.oneOf([
+				'danger',
 				'link',
 				'primary',
 				'secondary',
@@ -700,7 +702,9 @@ Modal.propTypes = {
 	iframeProps: PropTypes.object,
 	onClose: PropTypes.func,
 	onOpen: PropTypes.func,
+	role: PropTypes.string,
 	size: PropTypes.oneOf(['full-screen', 'lg', 'md', 'sm']),
+	status: PropTypes.string,
 	title: PropTypes.string,
 	url: PropTypes.string,
 };

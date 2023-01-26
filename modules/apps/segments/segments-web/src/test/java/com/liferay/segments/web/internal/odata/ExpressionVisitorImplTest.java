@@ -14,9 +14,12 @@
 
 package com.liferay.segments.web.internal.odata;
 
+import com.fasterxml.jackson.databind.util.ISO8601Utils;
+
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.ComplexEntityField;
 import com.liferay.portal.odata.entity.EntityField;
@@ -26,7 +29,6 @@ import com.liferay.portal.odata.entity.StringEntityField;
 import com.liferay.portal.odata.filter.expression.BinaryExpression;
 import com.liferay.portal.odata.filter.expression.ComplexPropertyExpression;
 import com.liferay.portal.odata.filter.expression.Expression;
-import com.liferay.portal.odata.filter.expression.ExpressionVisitException;
 import com.liferay.portal.odata.filter.expression.ExpressionVisitor;
 import com.liferay.portal.odata.filter.expression.ListExpression;
 import com.liferay.portal.odata.filter.expression.LiteralExpression;
@@ -37,13 +39,16 @@ import com.liferay.portal.odata.filter.expression.PropertyExpression;
 import com.liferay.portal.odata.filter.expression.UnaryExpression;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.text.ParsePosition;
+
+import java.time.Duration;
+import java.time.Instant;
+
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,8 +72,49 @@ public class ExpressionVisitorImplTest {
 	}
 
 	@Test
+	public void testVisitBinaryExpressionOperationSub() throws Exception {
+		Duration duration = Duration.ofDays(1);
+
+		Date initialDate = new Date();
+
+		Instant initialInstant = initialDate.toInstant();
+
+		initialInstant = initialInstant.minusMillis(duration.toMillis());
+
+		Date date = ISO8601Utils.parse(
+			(String)_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.SUB,
+				ExpressionVisitorImpl.MethodType.NOW, duration),
+			new ParsePosition(0));
+
+		Instant instant = Instant.ofEpochMilli(date.getTime());
+
+		Date finalDate = new Date();
+
+		Instant finalInstant = finalDate.toInstant();
+
+		finalInstant = finalInstant.minusMillis(duration.toMillis());
+
+		Assert.assertTrue(
+			instant.getEpochSecond() >= initialInstant.getEpochSecond());
+		Assert.assertTrue(
+			instant.getEpochSecond() <= finalInstant.getEpochSecond());
+	}
+
+	@Test
+	public void testVisitBinaryExpressionOperationSubwithDate()
+		throws Exception {
+
+		Assert.assertEquals(
+			"2022-12-27T23:00:00Z",
+			_expressionVisitorImpl.visitBinaryExpressionOperation(
+				BinaryExpression.Operation.SUB, "2022-12-28T23:00:00.000Z",
+				Duration.ofDays(1)));
+	}
+
+	@Test
 	public void testVisitBinaryExpressionOperationWithAndOperation()
-		throws ExpressionVisitException {
+		throws Exception {
 
 		Map<String, EntityField> entityFieldsMap =
 			_entityModel.getEntityFieldsMap();
@@ -110,13 +156,13 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitBinaryExpressionOperationWithComplexEntityField()
-		throws ExpressionVisitException {
+		throws Exception {
 
 		BinaryExpression binaryExpression = new BinaryExpression() {
 
 			@Override
 			public <T> T accept(ExpressionVisitor<T> expressionVisitor)
-				throws ExpressionVisitException {
+				throws Exception {
 
 				Expression leftOperationExpression =
 					getLeftOperationExpression();
@@ -136,7 +182,7 @@ public class ExpressionVisitorImplTest {
 
 					@Override
 					public <T> T accept(ExpressionVisitor<T> expressionVisitor)
-						throws ExpressionVisitException {
+						throws Exception {
 
 						return expressionVisitor.visitMemberExpression(this);
 					}
@@ -147,7 +193,7 @@ public class ExpressionVisitorImplTest {
 							@Override
 							public <T> T accept(
 									ExpressionVisitor<T> expressionVisitor)
-								throws ExpressionVisitException {
+								throws Exception {
 
 								return expressionVisitor.
 									visitComplexPropertyExpression(this);
@@ -166,7 +212,7 @@ public class ExpressionVisitorImplTest {
 									public <T> T accept(
 											ExpressionVisitor<T>
 												expressionVisitor)
-										throws ExpressionVisitException {
+										throws Exception {
 
 										return expressionVisitor.
 											visitPrimitivePropertyExpression(
@@ -198,7 +244,7 @@ public class ExpressionVisitorImplTest {
 
 					@Override
 					public <T> T accept(ExpressionVisitor<T> expressionVisitor)
-						throws ExpressionVisitException {
+						throws Exception {
 
 						return expressionVisitor.visitLiteralExpression(this);
 					}
@@ -234,7 +280,7 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitBinaryExpressionOperationWithEqualOperation()
-		throws ExpressionVisitException {
+		throws Exception {
 
 		Map<String, EntityField> entityFieldsMap =
 			_entityModel.getEntityFieldsMap();
@@ -258,7 +304,7 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitBinaryExpressionOperationWithSameTitleNestedOperations()
-		throws ExpressionVisitException {
+		throws Exception {
 
 		Map<String, EntityField> entityFieldsMap =
 			_entityModel.getEntityFieldsMap();
@@ -320,7 +366,7 @@ public class ExpressionVisitorImplTest {
 
 	@Test
 	public void testVisitBinaryExpressionOperationWithSameTitleUnnestedOperations()
-		throws ExpressionVisitException {
+		throws Exception {
 
 		Map<String, EntityField> entityFieldsMap =
 			_entityModel.getEntityFieldsMap();
@@ -373,16 +419,44 @@ public class ExpressionVisitorImplTest {
 	}
 
 	@Test
-	public void testVisitListExpressionOperation()
-		throws ExpressionVisitException {
+	public void testVisitDurationLiteralExpression() throws Exception {
+		LiteralExpression literalExpression = new LiteralExpression() {
 
+			@Override
+			public <T> T accept(ExpressionVisitor<T> expressionVisitor)
+				throws Exception {
+
+				return expressionVisitor.visitLiteralExpression(this);
+			}
+
+			@Override
+			public String getText() {
+				return "duration'PT24H'";
+			}
+
+			@Override
+			public Type getType() {
+				return LiteralExpression.Type.DURATION;
+			}
+
+		};
+
+		Duration duration =
+			(Duration)_expressionVisitorImpl.visitLiteralExpression(
+				literalExpression);
+
+		Assert.assertEquals("PT24H", duration.toString());
+	}
+
+	@Test
+	public void testVisitListExpressionOperation() throws Exception {
 		Map<String, EntityField> entityFieldsMap =
 			_entityModel.getEntityFieldsMap();
 
 		ListExpression listExpression = new ListExpression() {
 
 			public <T> T accept(ExpressionVisitor<T> expressionVisitor)
-				throws ExpressionVisitException {
+				throws Exception {
 
 				List<Object> objects = Arrays.asList("title1", "title2");
 
@@ -424,9 +498,7 @@ public class ExpressionVisitorImplTest {
 	}
 
 	@Test
-	public void testVisitMethodExpressionWithContains()
-		throws ExpressionVisitException {
-
+	public void testVisitMethodExpressionWithContains() {
 		Map<String, EntityField> entityFieldsMap =
 			_entityModel.getEntityFieldsMap();
 
@@ -449,9 +521,15 @@ public class ExpressionVisitorImplTest {
 	}
 
 	@Test
-	public void testVisitUnaryExpressionOperation()
-		throws ExpressionVisitException {
+	public void testVisitMethodExpressionWithNow() {
+		Assert.assertEquals(
+			ExpressionVisitorImpl.MethodType.NOW,
+			_expressionVisitorImpl.visitMethodExpression(
+				Collections.emptyList(), MethodExpression.Type.NOW));
+	}
 
+	@Test
+	public void testVisitUnaryExpressionOperation() throws Exception {
 		Map<String, EntityField> entityFieldsMap =
 			_entityModel.getEntityFieldsMap();
 
@@ -480,18 +558,24 @@ public class ExpressionVisitorImplTest {
 
 		@Override
 		public Map<String, EntityField> getEntityFieldsMap() {
-			return Stream.of(
-				new ComplexEntityField(
-					"complexField",
-					Collections.singletonList(
-						new StringEntityField(
-							"fieldInsideComplexField",
-							locale -> "fieldInsideComplexFieldInternal"))),
-				new IntegerEntityField("id", locale -> "id"),
-				new StringEntityField("title", locale -> "title")
-			).collect(
-				Collectors.toMap(EntityField::getName, Function.identity())
-			);
+			EntityField complexEntityField = new ComplexEntityField(
+				"complexField",
+				Collections.singletonList(
+					new StringEntityField(
+						"fieldInsideComplexField",
+						locale -> "fieldInsideComplexFieldInternal")));
+			EntityField integerEntityField = new IntegerEntityField(
+				"id", locale -> "id");
+			EntityField stringEntityField = new StringEntityField(
+				"title", locale -> "title");
+
+			return HashMapBuilder.put(
+				complexEntityField.getName(), complexEntityField
+			).put(
+				integerEntityField.getName(), integerEntityField
+			).put(
+				stringEntityField.getName(), stringEntityField
+			).build();
 		}
 
 		@Override

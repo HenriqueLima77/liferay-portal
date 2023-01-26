@@ -35,7 +35,10 @@ import {
 	Liferay,
 	LiferayOnAction,
 } from '../../../../common/services/liferay/liferay';
-import {capitalizeFirstLetter} from '../../../../common/utils/constantsType';
+import {
+	capitalizeFirstLetter,
+	lowercaseFirstLetter,
+} from '../../../../common/utils/constantsType';
 import formatDate from '../../../../common/utils/dateFormatter';
 import useDebounce from '../../../../hooks/useDebounce';
 
@@ -162,11 +165,10 @@ const ClaimsTable = () => {
 	const [parameters, setParameters] = useState<Parameters>(
 		generateParameters()
 	);
+	const parameterDebounce = useDebounce(parameters, 200);
 
 	parameters.pageSize = pageSize.toString();
 	parameters.page = page.toString();
-
-	const parameterDebounce = useDebounce(parameters, 200);
 
 	const setFilterSearch = () => {
 		setPage(1);
@@ -191,6 +193,10 @@ const ClaimsTable = () => {
 		}
 		if (!searchInput) {
 			setParameters(generateParameters());
+
+			if (!filterProductCheck.length && !filterStatusCheck.length) {
+				return setParameters(generateParameters(filterSearch));
+			}
 
 			if (!filterProductCheck.length && filterStatusCheck.length) {
 				return setParameters(generateParameters(filterStatus));
@@ -290,6 +296,7 @@ const ClaimsTable = () => {
 
 	const handleEditClaim = (externalReferenceCode: string) => {
 		alert(`Edit ${externalReferenceCode} Action`);
+		searchInput;
 	};
 
 	useEffect(() => {
@@ -348,7 +355,12 @@ const ClaimsTable = () => {
 		setFilterSearch();
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filterProductCheck, filterStatusCheck, filterCheckedLabel]);
+	}, [
+		filterProductCheck,
+		filterStatusCheck,
+		filterCheckedLabel,
+		currentSort,
+	]);
 
 	const getClaimsAndPolicies = useCallback(async () => {
 		const claimList: TableContentType[] = [];
@@ -579,10 +591,18 @@ const ClaimsTable = () => {
 		setCheckedStateStatus(updatedCheckedStateStatus);
 	};
 
+	const handleSortParameters = (filter: string) => {
+		setSortedOrder(filter);
+		setParameters((previous) => ({
+			...previous,
+			sort: `${currentSort}:${filter}`,
+		}));
+	};
+
 	const setSortRule = () => {
 		sortedOrder === Order.Descendant
-			? setSortedOrder(Order.Ascendant)
-			: setSortedOrder(Order.Descendant);
+			? handleSortParameters(Order.Ascendant)
+			: handleSortParameters(Order.Descendant);
 	};
 
 	const setHeader = (user: string) => {
@@ -648,9 +668,13 @@ const ClaimsTable = () => {
 			ClaimsChartTypes.SettledClaims
 		);
 
+		const claimStatusFieldKey = lowercaseFirstLetter(
+			statuses.replace(' ', '')
+		);
+
 		setFilterStatusCheck((prevFilterStatusCheck: string[]) => [
 			...prevFilterStatusCheck,
-			`'${statuses}'`,
+			`'${claimStatusFieldKey}'`,
 		]);
 	};
 
@@ -904,6 +928,7 @@ const ClaimsTable = () => {
 									setFilterCheckedLabel([]);
 									setFilterProductCheck([]);
 									setFilterStatusCheck([]);
+									setIsRemaining(false);
 									setParameters(generateParameters());
 								}}
 							>

@@ -14,6 +14,7 @@
 
 package com.liferay.portal.odata.internal.filter;
 
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.odata.entity.BooleanEntityField;
 import com.liferay.portal.odata.entity.CollectionEntityField;
 import com.liferay.portal.odata.entity.ComplexEntityField;
@@ -34,6 +35,7 @@ import com.liferay.portal.odata.filter.expression.ListExpression;
 import com.liferay.portal.odata.filter.expression.LiteralExpression;
 import com.liferay.portal.odata.filter.expression.MemberExpression;
 import com.liferay.portal.odata.filter.expression.MethodExpression;
+import com.liferay.portal.odata.filter.expression.NavigationPropertyExpression;
 import com.liferay.portal.odata.filter.expression.PrimitivePropertyExpression;
 import com.liferay.portal.odata.filter.expression.UnaryExpression;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -301,6 +303,38 @@ public class FilterParserImplTest {
 	}
 
 	@Test
+	public void testParseWithEqBinaryExpressionWithDateTimeOffsetAndNowMethod()
+		throws ExpressionVisitException {
+
+		Expression expression = _filterParserImpl.parse(
+			"dateTimeExternal ge now()");
+
+		BinaryExpression binaryExpression = (BinaryExpression)expression;
+
+		Assert.assertEquals(
+			BinaryExpression.Operation.GE, binaryExpression.getOperation());
+
+		MemberExpression memberExpression =
+			(MemberExpression)binaryExpression.getLeftOperationExpression();
+
+		PrimitivePropertyExpression primitivePropertyExpression =
+			(PrimitivePropertyExpression)memberExpression.getExpression();
+
+		Assert.assertEquals(
+			"dateTimeExternal", primitivePropertyExpression.getName());
+
+		MethodExpression methodExpression =
+			(MethodExpression)binaryExpression.getRightOperationExpression();
+
+		Assert.assertEquals(
+			MethodExpression.Type.NOW, methodExpression.getType());
+
+		List<Expression> expressions = methodExpression.getExpressions();
+
+		Assert.assertTrue(expressions.isEmpty());
+	}
+
+	@Test
 	public void testParseWithEqBinaryExpressionWithDateTimeWithInvalidType() {
 		AbstractThrowableAssert exception = Assertions.assertThatThrownBy(
 			() -> _filterParserImpl.parse("dateTimeExternal ge 2012-05-29")
@@ -464,6 +498,35 @@ public class FilterParserImplTest {
 		Assert.assertEquals("'value'", literalExpression.getText());
 		Assert.assertEquals(
 			LiteralExpression.Type.STRING, literalExpression.getType());
+	}
+
+	@Test
+	public void testParseWithGtBinaryExpressionOnCount()
+		throws ExpressionVisitException {
+
+		BinaryExpression binaryExpression =
+			(BinaryExpression)_filterParserImpl.parse(
+				"EntityModelName/$count gt 2");
+
+		Assert.assertEquals(
+			BinaryExpression.Operation.GT, binaryExpression.getOperation());
+
+		MemberExpression memberExpression =
+			(MemberExpression)binaryExpression.getLeftOperationExpression();
+
+		NavigationPropertyExpression navigationPropertyExpression =
+			(NavigationPropertyExpression)memberExpression.getExpression();
+
+		Assert.assertEquals(
+			NavigationPropertyExpression.Type.COUNT,
+			navigationPropertyExpression.getType());
+		Assert.assertEquals(
+			"EntityModelName", navigationPropertyExpression.getName());
+
+		LiteralExpression literalExpression =
+			(LiteralExpression)binaryExpression.getRightOperationExpression();
+
+		Assert.assertEquals(String.valueOf(2), literalExpression.getText());
 	}
 
 	@Test
@@ -782,6 +845,18 @@ public class FilterParserImplTest {
 						Collectors.toMap(
 							EntityField::getName, Function.identity())
 					);
+				}
+
+				@Override
+				public Map<String, EntityRelationship>
+					getEntityRelationshipsMap() {
+
+					return HashMapBuilder.put(
+						"EntityModelName",
+						new EntityRelationship(
+							this, "EntityModelName",
+							EntityRelationship.Type.COLLECTION)
+					).build();
 				}
 
 				@Override

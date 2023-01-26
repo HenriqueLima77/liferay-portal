@@ -97,8 +97,18 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 			throw new PortalException(throwable);
 		}
 
-		UploadPortletRequest uploadPortletRequest =
-			_portal.getUploadPortletRequest(actionRequest);
+		JournalArticle article = _addOrUpdateArticleDefaultValues(
+			actionRequest, _portal.getUploadPortletRequest(actionRequest));
+
+		_assetDisplayPageEntryFormProcessor.process(
+			JournalArticle.class.getName(), article.getResourcePrimKey(),
+			actionRequest);
+	}
+
+	private JournalArticle _addOrUpdateArticleDefaultValues(
+			ActionRequest actionRequest,
+			UploadPortletRequest uploadPortletRequest)
+		throws Exception {
 
 		String actionName = ParamUtil.getString(
 			actionRequest, ActionRequest.ACTION_NAME);
@@ -199,7 +209,7 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 			uploadPortletRequest, "expirationDateAmPm");
 
 		boolean neverExpire = ParamUtil.getBoolean(
-			uploadPortletRequest, "neverExpire", displayDateYear == 0);
+			uploadPortletRequest, "neverExpire");
 
 		if (!PropsValues.SCHEDULER_ENABLED) {
 			neverExpire = true;
@@ -223,7 +233,7 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 			uploadPortletRequest, "reviewDateAmPm");
 
 		boolean neverReview = ParamUtil.getBoolean(
-			uploadPortletRequest, "neverReview", displayDateYear == 0);
+			uploadPortletRequest, "neverReview");
 
 		if (!PropsValues.SCHEDULER_ENABLED) {
 			neverReview = true;
@@ -289,11 +299,7 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 				smallImage, smallImageURL, smallFile, serviceContext);
 		}
 
-		// Asset display page
-
-		_assetDisplayPageEntryFormProcessor.process(
-			JournalArticle.class.getName(), article.getResourcePrimKey(),
-			actionRequest);
+		return article;
 	}
 
 	@Reference

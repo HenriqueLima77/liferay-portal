@@ -9,7 +9,6 @@
  * distribution rights of the Software.
  */
 
-import ClayLoadingIndicator from '@clayui/loading-indicator';
 import React, {useEffect, useState} from 'react';
 
 import Container from '../../common/components/container';
@@ -30,7 +29,7 @@ export default function () {
 	const getRevenueData = async () => {
 		setLoading(true);
 		// eslint-disable-next-line @liferay/portal/no-global-fetch
-		const response = await fetch('/o/c/opportunitysfs', {
+		const response = await fetch('/o/c/opportunitysfs?&pageSize=200', {
 			headers: {
 				'accept': 'application/json',
 				'x-csrf-token': Liferay.authToken,
@@ -67,11 +66,10 @@ export default function () {
 	};
 
 	return (
-		<Container className="revenue-chart-card-height" title="Revenue">
-			{loading && <ClayLoadingIndicator className="mt-10" size="md" />}
-
+		<Container title="Revenue">
 			<DonutChart
 				chartData={chartData}
+				isLoading={loading}
 				titleChart={titleChart}
 				valueChart={valueChart}
 			/>

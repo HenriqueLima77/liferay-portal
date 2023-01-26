@@ -485,13 +485,6 @@ public class BundleSiteInitializer implements SiteInitializer {
 							siteNavigationMenuItemSettingsBuilder));
 
 			_invoke(
-				() -> _addLayoutPageTemplates(
-					assetListEntryIdsStringUtilReplaceValues,
-					documentsStringUtilReplaceValues,
-					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
-					serviceContext,
-					taxonomyCategoryIdsStringUtilReplaceValues));
-			_invoke(
 				() -> _addOrUpdateNotificationTemplates(
 					documentsStringUtilReplaceValues,
 					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
@@ -509,6 +502,25 @@ public class BundleSiteInitializer implements SiteInitializer {
 					documentsStringUtilReplaceValues,
 					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
 					serviceContext));
+
+			// LPS-172108 Layouts have to be created first so that links in
+			// layout page templates work
+
+			_invoke(
+				() -> _addLayoutPageTemplates(
+					assetListEntryIdsStringUtilReplaceValues,
+					documentsStringUtilReplaceValues,
+					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+					serviceContext,
+					taxonomyCategoryIdsStringUtilReplaceValues));
+
+			_invoke(
+				() -> _addLayoutUtilityPageEntries(
+					assetListEntryIdsStringUtilReplaceValues,
+					documentsStringUtilReplaceValues,
+					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+					serviceContext,
+					taxonomyCategoryIdsStringUtilReplaceValues));
 
 			// TODO Review order/dependency
 
@@ -1052,7 +1064,102 @@ public class BundleSiteInitializer implements SiteInitializer {
 				taxonomyCategoryIdsStringUtilReplaceValues);
 		}
 
+		_siteNavigationMenuLocalService.deleteSiteNavigationMenus(
+			serviceContext.getScopeGroupId());
+
 		_addSiteNavigationMenus(serviceContext, siteNavigationMenuItemSettings);
+	}
+
+	private void _addLayoutUtilityPageEntries(
+			Map<String, String> assetListEntryIdsStringUtilReplaceValues,
+			Map<String, String> documentsStringUtilReplaceValues,
+			Map<String, String>
+				objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+			ServiceContext serviceContext,
+			Map<String, String> taxonomyCategoryIdsStringUtilReplaceValues)
+		throws Exception {
+
+		Enumeration<URL> enumeration = _bundle.findEntries(
+			"/site-initializer/layout-utility-page-entries", StringPool.STAR,
+			true);
+
+		if (enumeration == null) {
+			return;
+		}
+
+		ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
+
+		while (enumeration.hasMoreElements()) {
+			URL url = enumeration.nextElement();
+
+			String fileName = url.getFile();
+
+			if (fileName.endsWith("/")) {
+				continue;
+			}
+
+			String urlPath = url.getPath();
+
+			if (StringUtil.endsWith(urlPath, "page-definition.json")) {
+				String json = StringUtil.read(url.openStream());
+
+				json = _replace(
+					json, assetListEntryIdsStringUtilReplaceValues,
+					documentsStringUtilReplaceValues,
+					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+					taxonomyCategoryIdsStringUtilReplaceValues);
+
+				Group group = serviceContext.getScopeGroup();
+
+				json = _replace(
+					json,
+					new String[] {
+						"[$GROUP_FRIENDLY_URL$]", "[$GROUP_ID$]",
+						"[$GROUP_KEY$]"
+					},
+					new String[] {
+						group.getFriendlyURL(),
+						String.valueOf(serviceContext.getScopeGroupId()),
+						group.getGroupKey()
+					});
+
+				String css = _replace(
+					SiteInitializerUtil.read(
+						FileUtil.getPath(urlPath) + "/css.css",
+						_servletContext),
+					documentsStringUtilReplaceValues);
+
+				if (Validator.isNotNull(css)) {
+					JSONObject jsonObject = _jsonFactory.createJSONObject(json);
+
+					JSONObject settingsJSONObject = jsonObject.getJSONObject(
+						"settings");
+
+					settingsJSONObject.put("css", css);
+
+					jsonObject.put("settings", settingsJSONObject);
+
+					json = jsonObject.toString();
+				}
+
+				zipWriter.addEntry(
+					_removeFirst(
+						urlPath,
+						"/site-initializer/layout-utility-page-entries"),
+					json);
+			}
+			else {
+				zipWriter.addEntry(
+					_removeFirst(
+						urlPath,
+						"/site-initializer/layout-utility-page-entries"),
+					url.openStream());
+			}
+		}
+
+		_layoutsImporter.importFile(
+			serviceContext.getUserId(), serviceContext.getScopeGroupId(),
+			zipWriter.getFile(), true);
 	}
 
 	private Map<String, String> _addObjectDefinitions(
@@ -1168,7 +1275,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 				JSONObject parametersJSONObject = jsonObject.getJSONObject(
 					"parameters");
 
-				_objectActionLocalService.addObjectAction(
+				_objectActionLocalService.addOrUpdateObjectAction(
+					jsonObject.getString("externalReferenceCode"), 0,
 					serviceContext.getUserId(), objectDefinition.getId(),
 					jsonObject.getBoolean("active"),
 					jsonObject.getString("conditionExpression"),
@@ -2445,7 +2553,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 		for (int i = 0; i < jsonArray.length(); i++) {
 			JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-			_objectActionLocalService.addObjectAction(
+			_objectActionLocalService.addOrUpdateObjectAction(
+				jsonObject.getString("externalReferenceCode"), 0,
 				serviceContext.getUserId(),
 				jsonObject.getLong("objectDefinitionId"),
 				jsonObject.getBoolean("active"),
@@ -3355,12 +3464,16 @@ public class BundleSiteInitializer implements SiteInitializer {
 
 		if (role == null) {
 			if (jsonObject.getInt("type") == RoleConstants.TYPE_ACCOUNT) {
-				_accountRoleLocalService.addAccountRole(
-					serviceContext.getUserId(),
-					AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT, name,
-					Collections.singletonMap(serviceContext.getLocale(), name),
-					SiteInitializerUtil.toMap(
-						jsonObject.getString("description")));
+				com.liferay.account.model.AccountRole accountRole =
+					_accountRoleLocalService.addAccountRole(
+						serviceContext.getUserId(),
+						AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT, name,
+						Collections.singletonMap(
+							serviceContext.getLocale(), name),
+						SiteInitializerUtil.toMap(
+							jsonObject.getString("description")));
+
+				role = accountRole.getRole();
 			}
 			else {
 				role = _roleLocalService.addRole(
@@ -3375,7 +3488,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 
 		JSONArray jsonArray = jsonObject.getJSONArray("actions");
 
-		if (JSONUtil.isEmpty(jsonArray)) {
+		if (JSONUtil.isEmpty(jsonArray) || (role == null)) {
 			return;
 		}
 
