@@ -444,8 +444,8 @@ public class ObjectActionLocalServiceTest {
 			// On after remove
 
 			_assertWebhookObjectAction(
-				"Peter", ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE, null,
-				WorkflowConstants.STATUS_APPROVED);
+				"Peter", ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
+				"Peter", WorkflowConstants.STATUS_APPROVED);
 		}
 		finally {
 			PrincipalThreadLocal.setName(originalName);
@@ -782,6 +782,9 @@ public class ObjectActionLocalServiceTest {
 				"JSONObject/properties", "Object/firstName"));
 
 		if (StringUtil.equals(
+				objectActionTriggerKey,
+				ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE) ||
+			StringUtil.equals(
 				objectActionTriggerKey,
 				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE)) {
 

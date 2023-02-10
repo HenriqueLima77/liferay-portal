@@ -13,25 +13,31 @@
  */
 
 import Form from '..';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useParams} from 'react-router-dom';
 
 import i18n from '../../../i18n';
 import fetcher from '../../../services/fetcher';
+import {Operators} from '../../../util/search';
 import {AutoCompleteProps} from '../AutoComplete';
 
 type RenderedFieldOptions = string[] | {label: string; value: string}[];
 
 export type RendererFields = {
+	disabled?: boolean;
 	label: string;
 	name: string;
+	operator?: Operators;
 	options?: RenderedFieldOptions;
 	type:
 		| 'autocomplete'
 		| 'checkbox'
-		| 'text'
-		| 'textarea'
+		| 'date'
+		| 'multiselect'
+		| 'number'
 		| 'select'
-		| 'multiselect';
+		| 'text'
+		| 'textarea';
 } & Partial<AutoCompleteProps>;
 
 type RendererProps = {
@@ -47,6 +53,7 @@ const Renderer: React.FC<RendererProps> = ({
 	form,
 	onChange,
 }) => {
+	const params = useParams();
 	const [disabledFields, setDisableFields] = useState({});
 	const [gqlOptions, setGqlOptions] = useState<{[key: string]: []}>({});
 
@@ -54,47 +61,69 @@ const Renderer: React.FC<RendererProps> = ({
 		filter ? label.toLowerCase().includes(filter.toLowerCase()) : true
 	);
 
-	const fetchQueries = (
-		gqlQueries: (RendererFields | (() => Promise<any>))[][]
-	) => {
-		Promise.allSettled(
-			gqlQueries.map(([, query]) => (query as any)())
-		).then((results) => {
+	const fetchQueries = useCallback(
+		async (gqlQueries: (RendererFields | (() => Promise<any>))[][]) => {
+			const results = await Promise.allSettled(
+				gqlQueries.map(([, query]) => (query as any)())
+			);
+
 			let i = 0;
 			const _gqlOptions: any = {};
+
 			for (const result of results) {
 				if (result.status === 'fulfilled') {
 					const queries: any[][] = [...(gqlQueries as any)];
 					const field: RendererFields = queries[i][0];
+					const fieldIndex = fields.findIndex(
+						(value) => value.name === field.name
+					);
 
 					if (field.transformData) {
-						_gqlOptions[field.name] = field.transformData(
-							result.value
-						);
+						const parsedValue = field.transformData(result.value);
+
+						if (fields[fieldIndex]) {
+							fields[fieldIndex].options = parsedValue;
+						}
+
+						_gqlOptions[field.name] = parsedValue;
 					}
 				}
 				i++;
 			}
 
 			setGqlOptions(_gqlOptions);
-		});
-	};
+		},
+		[fields]
+	);
 
 	useEffect(() => {
 		const gqlQueries = fields
 			.filter(({resource}) => resource)
 			.map(({resource, ...field}) => [
 				field,
-				() => fetcher(resource as string),
+				() =>
+					fetcher(
+						(typeof resource === 'function'
+							? resource(params)
+							: resource) as string
+					),
 			]);
 
-		fetchQueries(gqlQueries);
-	}, [fields]);
+		fetchQueries(gqlQueries as any);
+	}, [fetchQueries, fields, params]);
 
 	return (
 		<div className="form-renderer">
 			{fieldsFiltered.map((field, index) => {
-				const {label, name, type, options = [], resource} = field;
+				const {
+					label,
+					disabled,
+					name,
+					type,
+					options = [],
+					resource,
+				} = field;
+
 				const currentValue = form[name];
 
 				const getOptions = () => {
@@ -112,18 +141,21 @@ const Renderer: React.FC<RendererProps> = ({
 					return _options;
 				};
 
-				if (['text', 'textarea'].includes(type)) {
+				if (['date', 'number', 'text', 'textarea'].includes(type)) {
 					return (
 						<div key={index}>
 							<Form.Input
-								disabled={(disabledFields as any)[name]}
+								disabled={
+									(disabled ?? (disabledFields as any))[name]
+								}
 								onChange={onChange}
 								value={currentValue}
-								{...field}
+								{...(field as any)}
 							/>
 
 							{type === 'textarea' && (
 								<Form.Checkbox
+									disabled={disabled}
 									label={i18n.sub('no-x', field.label)}
 									onClick={() => {
 										onChange({target: {name, value: null}});
@@ -144,6 +176,7 @@ const Renderer: React.FC<RendererProps> = ({
 				if (type === 'select') {
 					return (
 						<Form.Select
+							disabled={disabled}
 							key={index}
 							label={label}
 							name={name}
@@ -178,6 +211,7 @@ const Renderer: React.FC<RendererProps> = ({
 							{options.map((option, index) => (
 								<Form.Checkbox
 									checked={form[name]?.includes(option)}
+									disabled={disabled}
 									key={index}
 									label={
 										typeof option === 'string'
@@ -211,7 +245,10 @@ const Renderer: React.FC<RendererProps> = ({
 					return (
 						<div className="mb-2" key={index}>
 							<Form.MultiSelect
+								disabled={disabled}
 								label={label}
+								name={name}
+								onChange={onChange}
 								options={getOptions()}
 								value={currentValue}
 							/>

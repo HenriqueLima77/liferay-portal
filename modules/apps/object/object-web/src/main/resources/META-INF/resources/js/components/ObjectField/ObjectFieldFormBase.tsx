@@ -38,7 +38,7 @@ import './ObjectFieldFormBase.scss';
 
 interface IProps {
 	children?: ReactNode;
-	creationLanguageId?: Locale;
+	creationLanguageId2?: Locale;
 	disabled?: boolean;
 	editingField?: boolean;
 	errors: ObjectFieldErrors;
@@ -106,6 +106,7 @@ async function getFieldSettingsByBusinessType(
 	const {
 		businessType,
 		defaultValue,
+		listTypeDefinitionExternalReferenceCode,
 		listTypeDefinitionId,
 		objectFieldSettings,
 		state,
@@ -116,9 +117,9 @@ async function getFieldSettingsByBusinessType(
 
 		setPickLists(picklistData);
 
-		if (state && listTypeDefinitionId) {
+		if (state && listTypeDefinitionExternalReferenceCode) {
 			const picklistItemsData = await API.getPickListItems(
-				listTypeDefinitionId
+				listTypeDefinitionId!
 			);
 
 			setPickListItems(picklistItemsData);
@@ -164,7 +165,7 @@ async function getFieldSettingsByBusinessType(
 
 export default function ObjectFieldFormBase({
 	children,
-	creationLanguageId,
+	creationLanguageId2,
 	disabled,
 	editingField,
 	errors,
@@ -227,7 +228,9 @@ export default function ObjectFieldFormBase({
 			fieldSettingsMap.get(option.businessType) || [];
 
 		const isSearchableByText =
-			option.businessType === 'Attachment' || option.dbType === 'String';
+			option.businessType === 'Attachment' ||
+			option.dbType === 'Clob' ||
+			option.dbType === 'String';
 
 		const indexedAsKeyword = isSearchableByText && values.indexedAsKeyword;
 
@@ -341,7 +344,7 @@ export default function ObjectFieldFormBase({
 
 			{values.businessType === 'Aggregation' && (
 				<AggregationFormBase
-					creationLanguageId={creationLanguageId!}
+					creationLanguageId2={creationLanguageId2 as Locale}
 					editingField={editingField}
 					errors={errors}
 					objectDefinitionExternalReferenceCode={
@@ -391,6 +394,7 @@ export default function ObjectFieldFormBase({
 			{(values.businessType === 'Picklist' ||
 				values.businessType === 'MultiselectPicklist') && (
 				<AutoComplete<Partial<PickList>>
+					creationLanguageId={creationLanguageId2 as Locale}
 					disabled={disabled}
 					emptyStateMessage={Liferay.Language.get('option-not-found')}
 					error={errors.listTypeDefinitionId}
@@ -461,6 +465,7 @@ export default function ObjectFieldFormBase({
 
 			{values.state && (
 				<AutoComplete<PickListItem>
+					creationLanguageId={creationLanguageId2 as Locale}
 					emptyStateMessage={Liferay.Language.get('option-not-found')}
 					error={errors.defaultValue}
 					items={filteredPicklistItems}

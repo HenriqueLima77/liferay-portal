@@ -211,7 +211,8 @@ public class DefaultObjectEntryManagerImplTest {
 			_listTypeDefinitionLocalService.addListTypeDefinition(
 				null, _adminUser.getUserId(),
 				Collections.singletonMap(
-					LocaleUtil.US, RandomTestUtil.randomString()));
+					LocaleUtil.US, RandomTestUtil.randomString()),
+				Collections.emptyList());
 
 		_objectDefinition2 = _createObjectDefinition(
 			Arrays.asList(
@@ -1566,6 +1567,21 @@ public class DefaultObjectEntryManagerImplTest {
 		_objectEntryManager.updateObjectEntry(
 			_simpleDTOConverterContext, _objectDefinition3,
 			objectEntry1.getId(), objectEntry1);
+
+		_assertFailure(
+			"The object field r_oneToManyRelationshipName_accountEntryId is " +
+				"unmodifiable because it is the account entry restrictor",
+			() -> _objectEntryManager.updateObjectEntry(
+				_simpleDTOConverterContext, _objectDefinition3,
+				objectEntry1.getId(),
+				new ObjectEntry() {
+					{
+						properties = HashMapBuilder.<String, Object>put(
+							"r_oneToManyRelationshipName_accountEntryId",
+							accountEntry2.getAccountEntryId()
+						).build();
+					}
+				}));
 	}
 
 	private AccountEntry _addAccountEntry() throws Exception {
@@ -1628,7 +1644,7 @@ public class DefaultObjectEntryManagerImplTest {
 	private String _addListTypeEntry() throws Exception {
 		ListTypeEntry listTypeEntry =
 			_listTypeEntryLocalService.addListTypeEntry(
-				_adminUser.getUserId(),
+				null, _adminUser.getUserId(),
 				_listTypeDefinition.getListTypeDefinitionId(),
 				RandomTestUtil.randomString(),
 				Collections.singletonMap(

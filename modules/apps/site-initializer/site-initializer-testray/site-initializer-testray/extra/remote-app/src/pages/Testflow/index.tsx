@@ -25,7 +25,6 @@ import {PickList, TestrayTask, testrayTaskImpl} from '../../services/rest';
 import {StatusesProgressScore, chartClassNames} from '../../util/constants';
 import {getTimeFromNow} from '../../util/date';
 import {getPercentLabel} from '../../util/graph.util';
-import {routines} from '../../util/mock';
 import TestflowModal from './TestflowModal';
 import useTestflowActions from './useTestflowActions';
 
@@ -124,7 +123,7 @@ const TestFlow = () => {
 								_,
 								{
 									subtaskScoreCompleted,
-									subtaskScoreIncomplete,
+									subtaskScoreSelfIncomplete,
 								}: TestrayTask
 							) => (
 								<TaskbarProgress
@@ -136,7 +135,7 @@ const TestFlow = () => {
 										],
 										[
 											StatusesProgressScore.INCOMPLETE,
-											Number(subtaskScoreIncomplete),
+											Number(subtaskScoreSelfIncomplete),
 										],
 									]}
 									taskbarClassNames={chartClassNames}
@@ -146,13 +145,22 @@ const TestFlow = () => {
 							value: i18n.translate('progress'),
 						},
 						{
-							key: 'assigned',
-							render: () => (
-								<Avatar.Group
-									assignedUsers={routines[0].assigned}
-									groupSize={3}
-								/>
-							),
+							key: 'assignedUsers',
+							render: (assignedUsers) => {
+								try {
+									return (
+										<Avatar.Group
+											assignedUsers={JSON.parse(
+												assignedUsers
+											)}
+											groupSize={3}
+										/>
+									);
+								}
+								catch {
+									return '';
+								}
+							},
 							value: i18n.translate('assigned'),
 						},
 					],

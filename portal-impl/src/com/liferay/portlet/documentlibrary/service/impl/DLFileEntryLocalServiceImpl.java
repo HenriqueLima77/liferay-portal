@@ -245,7 +245,8 @@ public class DLFileEntryLocalServiceImpl
 			PortalUtil.getCurrentAndAncestorSiteGroupIds(groupId), folderId,
 			fileEntryTypeId);
 
-		_validateFile(groupId, folderId, 0, fileName, extension, title);
+		_validateFile(
+			groupId, folderId, 0, fileEntryTypeId, fileName, extension, title);
 
 		long fileEntryId = counterLocalService.increment();
 
@@ -912,7 +913,7 @@ public class DLFileEntryLocalServiceImpl
 				}
 			}
 
-			DLStoreUtil.deleteFile(
+			_deleteFile(
 				dlFileEntry.getCompanyId(), dlFileEntry.getDataRepositoryId(),
 				dlFileEntry.getName(), version);
 		}
@@ -2488,6 +2489,15 @@ public class DLFileEntryLocalServiceImpl
 		}
 	}
 
+	private void _deleteFile(
+			long companyId, long repositoryId, String name, String versionLabel)
+		throws PortalException {
+
+		DLStoreUtil.deleteFile(companyId, repositoryId, name, versionLabel);
+		DLStoreUtil.deleteFile(
+			companyId, repositoryId, name, versionLabel + ".index");
+	}
+
 	private void _expireFileEntriesByCompanyId(
 			long companyId, Date expirationDate,
 			Map<String, Serializable> workflowContext,
@@ -3178,7 +3188,7 @@ public class DLFileEntryLocalServiceImpl
 
 		// File
 
-		DLStoreUtil.deleteFile(
+		_deleteFile(
 			user.getCompanyId(), dlFileEntry.getDataRepositoryId(),
 			dlFileEntry.getName(), lastDLFileVersion.getVersion());
 
@@ -3196,7 +3206,7 @@ public class DLFileEntryLocalServiceImpl
 	private void _registerPWCDeletionCallback(DLFileEntry dlFileEntry) {
 		TransactionCommitCallbackUtil.registerCallback(
 			() -> {
-				DLStoreUtil.deleteFile(
+				_deleteFile(
 					dlFileEntry.getCompanyId(),
 					dlFileEntry.getDataRepositoryId(), dlFileEntry.getName(),
 					DLFileEntryConstants.PRIVATE_WORKING_COPY_VERSION);
@@ -3226,7 +3236,7 @@ public class DLFileEntryLocalServiceImpl
 		_assetEntryLocalService.deleteEntry(
 			DLFileEntryConstants.getClassName(), dlFileVersion.getPrimaryKey());
 
-		DLStoreUtil.deleteFile(
+		_deleteFile(
 			dlFileEntry.getCompanyId(), dlFileEntry.getDataRepositoryId(),
 			dlFileEntry.getName(),
 			DLFileEntryConstants.PRIVATE_WORKING_COPY_VERSION);
@@ -3314,7 +3324,8 @@ public class DLFileEntryLocalServiceImpl
 
 			_validateFile(
 				dlFileEntry.getGroupId(), dlFileEntry.getFolderId(),
-				dlFileEntry.getFileEntryId(), fileName, extension, title);
+				dlFileEntry.getFileEntryId(), fileEntryTypeId, fileName,
+				extension, title);
 
 			// File version
 
@@ -3345,7 +3356,7 @@ public class DLFileEntryLocalServiceImpl
 			// File
 
 			if ((file != null) || (inputStream != null)) {
-				DLStoreUtil.deleteFile(
+				_deleteFile(
 					user.getCompanyId(), dlFileEntry.getDataRepositoryId(),
 					dlFileEntry.getName(), version);
 
@@ -3460,13 +3471,21 @@ public class DLFileEntryLocalServiceImpl
 	}
 
 	private void _validateFile(
-			long groupId, long folderId, long fileEntryId, String fileName,
-			String extension, String title)
+			long groupId, long folderId, long fileEntryId, long fileEntryTypeId,
+			String fileName, String extension, String title)
 		throws PortalException {
 
 		DLValidatorUtil.validateFileName(fileName);
 
-		_validateFileExtension(fileName, extension);
+		DLFileEntryType dlFileEntryType =
+			_dlFileEntryTypeLocalService.getDLFileEntryType(fileEntryTypeId);
+
+		if ((dlFileEntryType.getScope() !=
+				DLFileEntryTypeConstants.FILE_ENTRY_TYPE_SCOPE_SYSTEM) ||
+			Validator.isNotNull(extension)) {
+
+			_validateFileExtension(fileName, extension);
+		}
 
 		validateFile(groupId, folderId, fileEntryId, fileName, title);
 	}

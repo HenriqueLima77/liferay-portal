@@ -22,8 +22,8 @@ import {
 	AutoComplete,
 	FormError,
 	Input,
-	getLocalizableLabel,
 	REQUIRED_MSG,
+	getLocalizableLabel,
 	stringIncludesQuery,
 	useForm,
 } from '@liferay/object-js-components-web';
@@ -267,6 +267,7 @@ export function ModalAddObjectLayoutTab({
 									{selectedRelationshipInfo.labelContent}
 								</ClayLabel>
 							}
+							creationLanguageId={defaultLanguageId}
 							emptyStateMessage={Liferay.Language.get(
 								'there-are-no-relationship-for-this-object'
 							)}

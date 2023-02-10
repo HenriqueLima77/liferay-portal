@@ -1627,6 +1627,49 @@ public class Mutation {
 	}
 
 	@GraphQLField
+	public boolean deleteProductSpecification(@GraphQLName("id") Long id)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_productSpecificationResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			productSpecificationResource ->
+				productSpecificationResource.deleteProductSpecification(id));
+
+		return true;
+	}
+
+	@GraphQLField
+	public Response deleteProductSpecificationBatch(
+			@GraphQLName("id") Long id,
+			@GraphQLName("callbackURL") String callbackURL,
+			@GraphQLName("object") Object object)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_productSpecificationResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			productSpecificationResource ->
+				productSpecificationResource.deleteProductSpecificationBatch(
+					id, callbackURL, object));
+	}
+
+	@GraphQLField
+	public ProductSpecification patchProductSpecification(
+			@GraphQLName("id") Long id,
+			@GraphQLName("productSpecification") ProductSpecification
+				productSpecification)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_productSpecificationResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			productSpecificationResource ->
+				productSpecificationResource.patchProductSpecification(
+					id, productSpecification));
+	}
+
+	@GraphQLField
 	public ProductSpecification createProductIdProductSpecification(
 			@GraphQLName("id") Long id,
 			@GraphQLName("productSpecification") ProductSpecification
@@ -1842,7 +1885,7 @@ public class Mutation {
 	}
 
 	@GraphQLField
-	public Response patchSkuByExternalReferenceCode(
+	public Sku patchSkuByExternalReferenceCode(
 			@GraphQLName("externalReferenceCode") String externalReferenceCode,
 			@GraphQLName("sku") Sku sku)
 		throws Exception {
@@ -1873,8 +1916,7 @@ public class Mutation {
 	}
 
 	@GraphQLField
-	public Response patchSku(
-			@GraphQLName("id") Long id, @GraphQLName("sku") Sku sku)
+	public Sku patchSku(@GraphQLName("id") Long id, @GraphQLName("sku") Sku sku)
 		throws Exception {
 
 		return _applyComponentServiceObjects(

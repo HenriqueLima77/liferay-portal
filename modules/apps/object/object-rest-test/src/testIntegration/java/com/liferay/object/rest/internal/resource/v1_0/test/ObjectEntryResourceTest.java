@@ -24,15 +24,19 @@ import com.liferay.object.rest.internal.resource.v1_0.test.util.HTTPTestUtil;
 import com.liferay.object.rest.internal.resource.v1_0.test.util.ObjectDefinitionTestUtil;
 import com.liferay.object.rest.internal.resource.v1_0.test.util.ObjectEntryTestUtil;
 import com.liferay.object.rest.internal.resource.v1_0.test.util.ObjectRelationshipTestUtil;
+import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
@@ -43,10 +47,15 @@ import com.liferay.portal.util.PropsUtil;
 
 import java.util.Collections;
 
+import javax.ws.rs.NotSupportedException;
+
 import org.hamcrest.CoreMatchers;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,6 +73,30 @@ public class ObjectEntryResourceTest {
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
+
+	@BeforeClass
+	public static void setUpClass() throws Exception {
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-153117", "true"
+			).build());
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-164801", "true"
+			).build());
+	}
+
+	@AfterClass
+	public static void tearDownClass() throws Exception {
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-153117", "false"
+			).build());
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-164801", "false"
+			).build());
+	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -88,8 +121,19 @@ public class ObjectEntryResourceTest {
 			_objectDefinition2, _OBJECT_FIELD_NAME_2, _OBJECT_FIELD_VALUE_2);
 	}
 
+	@After
+	public void tearDown() throws Exception {
+		_objectRelationshipLocalService.deleteObjectRelationship(
+			_objectRelationship);
+
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			_objectDefinition1);
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			_objectDefinition2);
+	}
+
 	@Test
-	public void testFilterByRelatedObjectDefinitionSystemObjectField()
+	public void testFilterObjectEntriesByRelatedObjectEntries()
 		throws Exception {
 
 		PropsUtil.addProperties(
@@ -97,20 +141,9 @@ public class ObjectEntryResourceTest {
 				"feature.flag.LPS-154672", "true"
 			).build());
 
-		_objectRelationship = _addObjectRelationshipAndRelateObjectsEntries(
-			ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
-
-		_testFilterByRelatedObjectDefinitionSystemObjectField(
-			_objectRelationship);
-
-		_objectRelationshipLocalService.deleteObjectRelationship(
-			_objectRelationship);
-
-		_objectRelationship = _addObjectRelationshipAndRelateObjectsEntries(
-			ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
-
-		_testFilterByRelatedObjectDefinitionSystemObjectField(
-			_objectRelationship);
+		for (FilterOperator filterOperator : FilterOperator.values()) {
+			_testFilterObjectEntriesByRelatedObjectEntries(filterOperator);
+		}
 
 		PropsUtil.addProperties(
 			UnicodePropertiesBuilder.setProperty(
@@ -228,6 +261,155 @@ public class ObjectEntryResourceTest {
 	}
 
 	@Test
+	public void testPostCustomObjectEntryWithNestedCustomObjectEntriesInManyToManyRelationship()
+		throws Exception {
+
+		_objectRelationship = ObjectRelationshipTestUtil.addObjectRelationship(
+			_objectDefinition1, _objectDefinition2, TestPropsValues.getUserId(),
+			ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+
+		JSONObject objectEntryJSONObject = JSONUtil.put(
+			_objectRelationship.getName(),
+			_createObjectEntriesJSONArray(
+				_OBJECT_FIELD_NAME_2,
+				new String[] {
+					_NEW_OBJECT_FIELD_VALUE_1, _NEW_OBJECT_FIELD_VALUE_2
+				}));
+
+		JSONObject jsonObject = HTTPTestUtil.invoke(
+			objectEntryJSONObject.toString(),
+			_objectDefinition1.getRESTContextPath(), Http.Method.POST);
+
+		Assert.assertEquals(
+			0,
+			jsonObject.getJSONObject(
+				"status"
+			).get(
+				"code"
+			));
+
+		String objectEntryId = jsonObject.getString("id");
+
+		jsonObject = HTTPTestUtil.invoke(
+			null,
+			StringBundler.concat(
+				_objectDefinition1.getRESTContextPath(), StringPool.SLASH,
+				objectEntryId, "?nestedFields=", _objectRelationship.getName()),
+			Http.Method.GET);
+
+		JSONArray nestedObjectEntriesJSONArray = jsonObject.getJSONArray(
+			_objectRelationship.getName());
+
+		Assert.assertEquals(2, nestedObjectEntriesJSONArray.length());
+
+		_assertObjectEntryField(
+			(JSONObject)nestedObjectEntriesJSONArray.get(0),
+			_OBJECT_FIELD_NAME_2, _NEW_OBJECT_FIELD_VALUE_1);
+		_assertObjectEntryField(
+			(JSONObject)nestedObjectEntriesJSONArray.get(1),
+			_OBJECT_FIELD_NAME_2, _NEW_OBJECT_FIELD_VALUE_2);
+	}
+
+	@Test
+	public void testPostCustomObjectEntryWithNestedCustomObjectEntriesInManyToOneRelationship()
+		throws Exception {
+
+		_objectRelationship = ObjectRelationshipTestUtil.addObjectRelationship(
+			_objectDefinition1, _objectDefinition2, TestPropsValues.getUserId(),
+			ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		JSONObject objectEntryJSONObject = JSONUtil.put(
+			_objectRelationship.getName(),
+			JSONFactoryUtil.createJSONObject(
+				JSONUtil.put(
+					_OBJECT_FIELD_NAME_1, _NEW_OBJECT_FIELD_VALUE_1
+				).toString()));
+
+		JSONObject jsonObject = HTTPTestUtil.invoke(
+			objectEntryJSONObject.toString(),
+			_objectDefinition2.getRESTContextPath(), Http.Method.POST);
+
+		Assert.assertEquals(
+			0,
+			jsonObject.getJSONObject(
+				"status"
+			).get(
+				"code"
+			));
+
+		String objectEntryId = jsonObject.getString("id");
+
+		jsonObject = HTTPTestUtil.invoke(
+			null,
+			StringBundler.concat(
+				_objectDefinition2.getRESTContextPath(), StringPool.SLASH,
+				objectEntryId, "?nestedFields=",
+				StringBundler.concat(
+					"r_", _objectRelationship.getName(), "_",
+					StringUtil.replaceLast(
+						_objectDefinition1.getPKObjectFieldName(), "Id", ""))),
+			Http.Method.GET);
+
+		_assertObjectEntryField(
+			jsonObject.getJSONObject(
+				StringBundler.concat(
+					"r_", _objectRelationship.getName(), "_",
+					StringUtil.replaceLast(
+						_objectDefinition1.getPKObjectFieldName(), "Id", ""))),
+			_OBJECT_FIELD_NAME_1, _NEW_OBJECT_FIELD_VALUE_1);
+	}
+
+	@Test
+	public void testPostCustomObjectEntryWithNestedCustomObjectEntriesInOneToManyRelationship()
+		throws Exception {
+
+		_objectRelationship = ObjectRelationshipTestUtil.addObjectRelationship(
+			_objectDefinition1, _objectDefinition2, TestPropsValues.getUserId(),
+			ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		JSONObject objectEntryJSONObject = JSONUtil.put(
+			_objectRelationship.getName(),
+			_createObjectEntriesJSONArray(
+				_OBJECT_FIELD_NAME_2,
+				new String[] {
+					_NEW_OBJECT_FIELD_VALUE_1, _NEW_OBJECT_FIELD_VALUE_2
+				}));
+
+		JSONObject jsonObject = HTTPTestUtil.invoke(
+			objectEntryJSONObject.toString(),
+			_objectDefinition1.getRESTContextPath(), Http.Method.POST);
+
+		Assert.assertEquals(
+			0,
+			jsonObject.getJSONObject(
+				"status"
+			).get(
+				"code"
+			));
+
+		String objectEntryId = jsonObject.getString("id");
+
+		jsonObject = HTTPTestUtil.invoke(
+			null,
+			StringBundler.concat(
+				_objectDefinition1.getRESTContextPath(), StringPool.SLASH,
+				objectEntryId, "?nestedFields=", _objectRelationship.getName()),
+			Http.Method.GET);
+
+		JSONArray nestedObjectEntriesJSONArray = jsonObject.getJSONArray(
+			_objectRelationship.getName());
+
+		Assert.assertEquals(2, nestedObjectEntriesJSONArray.length());
+
+		_assertObjectEntryField(
+			(JSONObject)nestedObjectEntriesJSONArray.get(0),
+			_OBJECT_FIELD_NAME_2, _NEW_OBJECT_FIELD_VALUE_1);
+		_assertObjectEntryField(
+			(JSONObject)nestedObjectEntriesJSONArray.get(1),
+			_OBJECT_FIELD_NAME_2, _NEW_OBJECT_FIELD_VALUE_2);
+	}
+
+	@Test
 	public void testPutByExternalReferenceCodeManyToManyRelationship()
 		throws Exception {
 
@@ -298,28 +480,171 @@ public class ObjectEntryResourceTest {
 		return objectRelationship;
 	}
 
+	private void _assertObjectEntryField(
+		JSONObject objectEntryJSONObject, String objectFieldName,
+		String objectFieldValue) {
+
+		int objectEntryId = objectEntryJSONObject.getInt("id");
+
+		ObjectEntry objectEntry = _objectEntryLocalService.fetchObjectEntry(
+			objectEntryId);
+
+		Assert.assertEquals(
+			MapUtil.getString(objectEntry.getValues(), objectFieldName),
+			objectFieldValue);
+	}
+
+	private JSONArray _createObjectEntriesJSONArray(
+			String objectFieldName, String[] objectFieldValues)
+		throws Exception {
+
+		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+
+		for (String objectFieldValue : objectFieldValues) {
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+				JSONUtil.put(
+					objectFieldName, objectFieldValue
+				).toString());
+
+			jsonArray.put(jsonObject);
+		}
+
+		return jsonArray;
+	}
+
 	private void _testFilterByRelatedObjectDefinitionSystemObjectField(
+			FilterOperator filterOperator,
 			ObjectRelationship objectRelationship)
 		throws Exception {
 
 		_testFilterByRelatedObjectDefinitionSystemObjectField(
-			_OBJECT_FIELD_NAME_1, _OBJECT_FIELD_VALUE_1, _objectDefinition1,
-			objectRelationship, _objectEntry2.getObjectEntryId());
+			_OBJECT_FIELD_NAME_1, _OBJECT_FIELD_VALUE_1, filterOperator,
+			_objectDefinition1, objectRelationship,
+			_objectEntry2.getObjectEntryId());
+
 		_testFilterByRelatedObjectDefinitionSystemObjectField(
-			_OBJECT_FIELD_NAME_2, _OBJECT_FIELD_VALUE_2, _objectDefinition2,
-			objectRelationship, _objectEntry1.getObjectEntryId());
+			_OBJECT_FIELD_NAME_2, _OBJECT_FIELD_VALUE_2, filterOperator,
+			_objectDefinition2, objectRelationship,
+			_objectEntry1.getObjectEntryId());
 	}
 
 	private void _testFilterByRelatedObjectDefinitionSystemObjectField(
 			String expectedObjectFieldName, String expectedObjectFieldValue,
-			ObjectDefinition objectDefinition,
+			FilterOperator filterOperator, ObjectDefinition objectDefinition,
 			ObjectRelationship objectRelationship, long relatedObjectEntryId)
 		throws Exception {
 
 		String endpoint = StringBundler.concat(
 			objectDefinition.getRESTContextPath(), "?filter=",
-			objectRelationship.getName(), "/id%20eq%20'",
-			String.valueOf(relatedObjectEntryId), StringPool.APOSTROPHE);
+			objectRelationship.getName(), "/id%20", filterOperator.getValue(),
+			"%20'", String.valueOf(relatedObjectEntryId),
+			StringPool.APOSTROPHE);
+
+		_testFilterObjectEntriesByRelatedObjectEntriesUsingAFilterOperator(
+			endpoint, expectedObjectFieldName, expectedObjectFieldValue);
+	}
+
+	private void _testFilterObjectEntriesByRelatedObjectEntries(
+			FilterOperator filterOperator)
+		throws Exception {
+
+		_objectRelationship = _addObjectRelationshipAndRelateObjectsEntries(
+			ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+
+		_testFilterObjectEntriesByRelatedObjectEntriesInBothSidesOfRelationship(
+			_objectRelationship, filterOperator);
+
+		_objectRelationshipLocalService.deleteObjectRelationship(
+			_objectRelationship);
+
+		_objectRelationship = _addObjectRelationshipAndRelateObjectsEntries(
+			ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		_testFilterObjectEntriesByRelatedObjectEntriesInBothSidesOfRelationship(
+			_objectRelationship, filterOperator);
+	}
+
+	private void
+			_testFilterObjectEntriesByRelatedObjectEntriesInBothSidesOfRelationship(
+				ObjectRelationship objectRelationship,
+				FilterOperator filterOperator)
+		throws Exception {
+
+		_testFilterObjectEntriesByRelatedObjectEntriesUsingAFilterOperator(
+			_OBJECT_FIELD_NAME_1, _OBJECT_FIELD_VALUE_1, filterOperator,
+			_objectDefinition1, objectRelationship, _OBJECT_FIELD_NAME_2,
+			_OBJECT_FIELD_VALUE_2);
+		_testFilterObjectEntriesByRelatedObjectEntriesUsingAFilterOperator(
+			_OBJECT_FIELD_NAME_2, _OBJECT_FIELD_VALUE_2, filterOperator,
+			_objectDefinition2, objectRelationship, _OBJECT_FIELD_NAME_1,
+			_OBJECT_FIELD_VALUE_1);
+	}
+
+	private void
+			_testFilterObjectEntriesByRelatedObjectEntriesUsingAFilterOperator(
+				String expectedObjectFieldName, String expectedObjectFieldValue,
+				FilterOperator filterOperator,
+				ObjectDefinition objectDefinition,
+				ObjectRelationship objectRelationship,
+				String relatedObjectFieldName, String relatedObjectFieldValue)
+		throws Exception {
+
+		String endpoint = objectDefinition.getRESTContextPath() + "?filter=";
+
+		if (filterOperator == FilterOperator.CONTAINS) {
+			endpoint = endpoint.concat(
+				StringBundler.concat(
+					filterOperator.getValue(), StringPool.OPEN_PARENTHESIS,
+					objectRelationship.getName(), StringPool.SLASH,
+					relatedObjectFieldName, StringPool.COMMA,
+					StringPool.APOSTROPHE,
+					relatedObjectFieldValue.substring(1, 2),
+					StringPool.APOSTROPHE, StringPool.CLOSE_PARENTHESIS));
+		}
+		else if (filterOperator == FilterOperator.EQ) {
+			_testFilterByRelatedObjectDefinitionSystemObjectField(
+				filterOperator, objectRelationship);
+
+			endpoint = endpoint.concat(
+				StringBundler.concat(
+					objectRelationship.getName(), StringPool.SLASH,
+					relatedObjectFieldName, "%20", filterOperator.getValue(),
+					"%20'", relatedObjectFieldValue, StringPool.APOSTROPHE));
+		}
+		else if (filterOperator == FilterOperator.IN) {
+			endpoint = endpoint.concat(
+				StringBundler.concat(
+					objectRelationship.getName(), StringPool.SLASH,
+					relatedObjectFieldName, "%20", filterOperator.getValue(),
+					"%20('", RandomTestUtil.randomString(),
+					StringPool.APOSTROPHE, StringPool.COMMA,
+					StringPool.APOSTROPHE, relatedObjectFieldValue,
+					StringPool.APOSTROPHE, StringPool.CLOSE_PARENTHESIS));
+		}
+		else if (filterOperator == FilterOperator.STARTS_WITH) {
+			endpoint = endpoint.concat(
+				StringBundler.concat(
+					filterOperator.getValue(), StringPool.OPEN_PARENTHESIS,
+					objectRelationship.getName(), StringPool.SLASH,
+					relatedObjectFieldName, StringPool.COMMA,
+					StringPool.APOSTROPHE,
+					relatedObjectFieldValue.substring(0, 1),
+					StringPool.APOSTROPHE, StringPool.CLOSE_PARENTHESIS));
+		}
+		else {
+			throw new NotSupportedException(
+				"Filter " + filterOperator.name() + " is not supported");
+		}
+
+		_testFilterObjectEntriesByRelatedObjectEntriesUsingAFilterOperator(
+			endpoint, expectedObjectFieldName, expectedObjectFieldValue);
+	}
+
+	private void
+			_testFilterObjectEntriesByRelatedObjectEntriesUsingAFilterOperator(
+				String endpoint, String expectedObjectFieldName,
+				String expectedObjectFieldValue)
+		throws Exception {
 
 		JSONObject jsonObject = HTTPTestUtil.invoke(
 			null, endpoint, Http.Method.GET);
@@ -360,6 +685,12 @@ public class ObjectEntryResourceTest {
 			relatedObjectJSONObject.getString(_OBJECT_FIELD_NAME_1));
 	}
 
+	private static final String _NEW_OBJECT_FIELD_VALUE_1 =
+		RandomTestUtil.randomString();
+
+	private static final String _NEW_OBJECT_FIELD_VALUE_2 =
+		RandomTestUtil.randomString();
+
 	private static final String _OBJECT_FIELD_NAME_1 =
 		"x" + RandomTestUtil.randomString();
 
@@ -372,22 +703,37 @@ public class ObjectEntryResourceTest {
 	private static final String _OBJECT_FIELD_VALUE_2 =
 		RandomTestUtil.randomString();
 
-	@DeleteAfterTestRun
 	private ObjectDefinition _objectDefinition1;
-
-	@DeleteAfterTestRun
 	private ObjectDefinition _objectDefinition2;
 
-	@DeleteAfterTestRun
-	private ObjectEntry _objectEntry1;
+	@Inject
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
-	@DeleteAfterTestRun
+	private ObjectEntry _objectEntry1;
 	private ObjectEntry _objectEntry2;
 
-	@DeleteAfterTestRun
+	@Inject
+	private ObjectEntryLocalService _objectEntryLocalService;
+
 	private ObjectRelationship _objectRelationship;
 
 	@Inject
 	private ObjectRelationshipLocalService _objectRelationshipLocalService;
+
+	private enum FilterOperator {
+
+		CONTAINS("contains"), EQ("eq"), IN("in"), STARTS_WITH("startswith");
+
+		public String getValue() {
+			return _value;
+		}
+
+		private FilterOperator(String value) {
+			_value = value;
+		}
+
+		private final String _value;
+
+	}
 
 }

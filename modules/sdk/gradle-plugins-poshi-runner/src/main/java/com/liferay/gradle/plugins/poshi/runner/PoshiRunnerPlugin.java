@@ -14,10 +14,10 @@
 
 package com.liferay.gradle.plugins.poshi.runner;
 
+import com.liferay.gradle.plugins.poshi.runner.internal.util.StringUtil;
 import com.liferay.gradle.util.FileUtil;
 import com.liferay.gradle.util.GradleUtil;
 import com.liferay.gradle.util.OSDetector;
-import com.liferay.gradle.util.StringUtil;
 import com.liferay.gradle.util.Validator;
 
 import groovy.lang.Closure;
@@ -26,6 +26,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+
+import java.net.URL;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -55,6 +57,7 @@ import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
@@ -269,8 +272,6 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 
 		Task task = GradleUtil.addTask(
 			project, DOWNLOAD_WEB_DRIVER_BROWSER_BINARY_TASK_NAME, Task.class);
-
-		task.dependsOn(STOP_WEB_DRIVER_PROCESS_TASK_NAME);
 
 		task.doLast(
 			new Action<Task>() {
@@ -612,7 +613,8 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 	}
 
 	private String _getBrowserType(Properties poshiProperties) {
-		String browserType = poshiProperties.getProperty("browser.type");
+		String browserType = _getPoshiPropertyValue(
+			"browser.type", poshiProperties);
 
 		if (Validator.isNull(browserType)) {
 			return "chrome";
@@ -624,7 +626,7 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 	private String _getChromeDriverURL(String chromeDriverVersion) {
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("https://chromedriver.storage.googleapis.com/");
+		sb.append(_CHROME_DRIVER_BASE_URL);
 
 		sb.append(chromeDriverVersion);
 
@@ -728,6 +730,25 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 
 			if (_chromeDriverVersions.containsKey(chromeMajorVersion)) {
 				return _chromeDriverVersions.get(chromeMajorVersion);
+			}
+
+			try {
+				URL url = new URL(
+					_CHROME_DRIVER_BASE_URL + "LATEST_RELEASE_" +
+						chromeMajorVersion);
+
+				String chromeDriverVersion = StringUtil.read(url.openStream());
+
+				return chromeDriverVersion.trim();
+			}
+			catch (IOException ioException) {
+				Logger logger = project.getLogger();
+
+				if (logger.isWarnEnabled()) {
+					logger.warn(
+						"Unable to get driver version for Chrome {}: {}",
+						chromeMajorVersion, ioException.getMessage());
+				}
 			}
 		}
 
@@ -910,6 +931,21 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 		return poshiProperties;
 	}
 
+	private String _getPoshiPropertyValue(
+		String poshiPropertyName, Properties poshiProperties) {
+
+		Properties systemProperties = System.getProperties();
+
+		String poshiPropertyValue = systemProperties.getProperty(
+			poshiPropertyName);
+
+		if (Validator.isNull(poshiPropertyValue)) {
+			poshiPropertyValue = poshiProperties.getProperty(poshiPropertyName);
+		}
+
+		return poshiPropertyValue;
+	}
+
 	private FileCollection _getPoshiRunnerClasspath(Project project) {
 		Configuration poshiRunnerConfiguration = GradleUtil.getConfiguration(
 			project, POSHI_RUNNER_CONFIGURATION_NAME);
@@ -934,8 +970,8 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 		String browserType = _getBrowserType(poshiProperties);
 
 		if (browserType.equals("chrome")) {
-			String chromeBinaryPath = poshiProperties.getProperty(
-				"browser.chrome.bin.file");
+			String chromeBinaryPath = _getPoshiPropertyValue(
+				"browser.chrome.bin.file", poshiProperties);
 
 			url = _getChromeDriverURL(
 				_getChromeDriverVersion(project, chromeBinaryPath));
@@ -1096,6 +1132,9 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 		}
 	}
 
+	private static final String _CHROME_DRIVER_BASE_URL =
+		"https://chromedriver.storage.googleapis.com/";
+
 	private static final String _DEFAULT_CHROME_DRIVER_VERSION = "2.37";
 
 	private static final String _DEFAULT_GECKO_DRIVER_VERSION = "0.31.0";
@@ -1134,6 +1173,7 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 				put("106", "106.0.5249.61");
 				put("107", "107.0.5304.62");
 				put("108", "108.0.5359.71");
+				put("109", "109.0.5414.74");
 			}
 		};
 	private static final Map<String, String> _webDriverBrowserBinaryNames =

@@ -84,8 +84,12 @@ import com.liferay.knowledge.base.service.KBFolderLocalService;
 import com.liferay.knowledge.base.util.comparator.KBArticlePriorityComparator;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
+import com.liferay.layout.util.structure.LayoutStructure;
+import com.liferay.layout.util.structure.LayoutStructureItem;
+import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
 import com.liferay.notification.rest.dto.v1_0.NotificationTemplate;
@@ -96,6 +100,7 @@ import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
@@ -112,6 +117,7 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutSet;
+import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
@@ -127,6 +133,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -150,6 +157,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
@@ -913,7 +921,33 @@ public class BundleSiteInitializerTest {
 					"lfr-theme:regular:show-header")));
 	}
 
+	private void _assertLayoutStructureItems(
+		LayoutPageTemplateStructure layoutPageTemplateStructure,
+		int layoutStructureItemsCount, long segmentsExperienceId) {
+
+		LayoutStructure layoutStructure = LayoutStructure.of(
+			layoutPageTemplateStructure.getData(segmentsExperienceId));
+
+		List<LayoutStructureItem> layoutStructureItems =
+			layoutStructure.getLayoutStructureItems();
+
+		Assert.assertEquals(
+			layoutStructureItems.toString(), layoutStructureItemsCount,
+			layoutStructureItems.size());
+	}
+
 	private void _assertLayoutUtilityPageEntries(Group group) {
+		LayoutUtilityPageEntry defaultLayoutUtilityPageEntry =
+			_layoutUtilityPageEntryLocalService.
+				fetchDefaultLayoutUtilityPageEntry(
+					group.getGroupId(),
+					LayoutUtilityPageEntryConstants.TYPE_SC_NOT_FOUND);
+
+		Assert.assertNotNull(defaultLayoutUtilityPageEntry);
+		Assert.assertEquals(
+			"Test Default Layout Utility Page Entry",
+			defaultLayoutUtilityPageEntry.getName());
+
 		LayoutUtilityPageEntry layoutUtilityPageEntry =
 			_layoutUtilityPageEntryLocalService.
 				fetchLayoutUtilityPageEntryByExternalReferenceCode(
@@ -922,6 +956,11 @@ public class BundleSiteInitializerTest {
 		Assert.assertNotNull(layoutUtilityPageEntry);
 		Assert.assertEquals(
 			"Test Layout Utility Page Entry", layoutUtilityPageEntry.getName());
+		Assert.assertEquals(
+			LayoutUtilityPageEntryConstants.TYPE_SC_NOT_FOUND,
+			layoutUtilityPageEntry.getType());
+		Assert.assertFalse(
+			layoutUtilityPageEntry.isDefaultLayoutUtilityPageEntry());
 	}
 
 	private void _assertListTypeDefinitions(ServiceContext serviceContext)
@@ -1050,7 +1089,7 @@ public class BundleSiteInitializerTest {
 
 		_assertObjectActions(3, objectDefinition1);
 		_assertObjectEntries(group.getGroupId(), objectDefinition1, 0);
-		_assertObjectFields(objectDefinition1, 9);
+		_assertObjectFields(objectDefinition1, 8);
 		_assertObjectRelationships(objectDefinition1, serviceContext);
 
 		ObjectDefinition objectDefinition2 =
@@ -1063,7 +1102,7 @@ public class BundleSiteInitializerTest {
 
 		_assertObjectActions(2, objectDefinition2);
 		_assertObjectEntries(group.getGroupId(), objectDefinition2, 0);
-		_assertObjectFields(objectDefinition2, 8);
+		_assertObjectFields(objectDefinition2, 9);
 
 		ObjectDefinition objectDefinition3 =
 			_objectDefinitionLocalService.fetchObjectDefinition(
@@ -1086,10 +1125,24 @@ public class BundleSiteInitializerTest {
 			int objectEntriesCount)
 		throws Exception {
 
+		List<ObjectEntry> objectEntries =
+			_objectEntryLocalService.getObjectEntries(
+				groupId, objectDefinition.getObjectDefinitionId(), -1, -1);
+
+		Assert.assertNotNull(objectEntries);
 		Assert.assertEquals(
-			objectEntriesCount,
-			_objectEntryLocalService.getObjectEntriesCount(
-				groupId, objectDefinition.getObjectDefinitionId()));
+			objectEntries.toString(), objectEntriesCount, objectEntries.size());
+
+		for (ObjectEntry objectEntry : objectEntries) {
+			Map<String, Serializable> objectEntryValues =
+				objectEntry.getValues();
+
+			for (Map.Entry<String, Serializable> entry :
+					objectEntryValues.entrySet()) {
+
+				Assert.assertTrue(Validator.isNotNull(entry.getValue()));
+			}
+		}
 	}
 
 	private void _assertObjectFields(
@@ -1113,10 +1166,13 @@ public class BundleSiteInitializerTest {
 				serviceContext.fetchUser()
 			).build();
 
+		ObjectDefinition objectDefinition1 =
+			_objectDefinitionLocalService.fetchSystemObjectDefinition("User");
+
 		Page<ObjectRelationship> page1 =
 			objectRelationshipResource.
 				getObjectDefinitionObjectRelationshipsPage(
-					objectDefinition.getObjectDefinitionId(), null,
+					objectDefinition1.getObjectDefinitionId(), null,
 					objectRelationshipResource.toFilter("name eq 'testOR1'"),
 					null);
 
@@ -1239,11 +1295,11 @@ public class BundleSiteInitializerTest {
 
 		Layout privateLayout = privateLayouts.get(0);
 
-		Assert.assertTrue(privateLayout.isHidden());
 		Assert.assertEquals(
 			"Test Private Layout",
 			privateLayout.getName(LocaleUtil.getSiteDefault()));
 		Assert.assertEquals("content", privateLayout.getType());
+		Assert.assertTrue(privateLayout.isHidden());
 
 		List<Layout> privateChildLayouts = privateLayout.getAllChildren();
 
@@ -1264,94 +1320,85 @@ public class BundleSiteInitializerTest {
 		int publicLayoutsCount = _layoutLocalService.getLayoutsCount(
 			group, false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
 
-		Assert.assertEquals(4, publicLayoutsCount);
+		Assert.assertEquals(5, publicLayoutsCount);
 
-		Layout publicLayout = _layoutLocalService.getLayoutByFriendlyURL(
+		Layout layout = _layoutLocalService.getLayoutByFriendlyURL(
 			group.getGroupId(), false, "/test-public-layout");
 
-		Assert.assertFalse(publicLayout.isHidden());
 		Assert.assertEquals(
-			"Test Public Layout",
-			publicLayout.getName(LocaleUtil.getSiteDefault()));
-		Assert.assertEquals("content", publicLayout.getType());
+			"Test Public Layout", layout.getName(LocaleUtil.getSiteDefault()));
+		Assert.assertEquals("content", layout.getType());
+		Assert.assertFalse(layout.isHidden());
 
-		Layout publicPermissionsLayout =
-			_layoutLocalService.getLayoutByFriendlyURL(
-				group.getGroupId(), false, "/test-public-permissions-layout");
+		List<Layout> layouts = layout.getAllChildren();
 
-		Role guestRole = _roleLocalService.getRole(
-			publicLayout.getCompanyId(), RoleConstants.GUEST);
+		Assert.assertEquals(layouts.toString(), 1, layouts.size());
+
+		layout = layouts.get(0);
+
+		Assert.assertEquals(
+			"Test Public Child Layout",
+			layout.getName(LocaleUtil.getSiteDefault()));
+
+		layout = _layoutLocalService.getLayoutByFriendlyURL(
+			group.getGroupId(), false, "/test-public-permissions-layout");
+
+		Role role = _roleLocalService.getRole(
+			layout.getCompanyId(), RoleConstants.GUEST);
 
 		boolean hasGuestViewPermission =
 			_resourcePermissionLocalService.hasResourcePermission(
-				publicPermissionsLayout.getCompanyId(),
-				publicPermissionsLayout.getModelClassName(),
+				layout.getCompanyId(), layout.getModelClassName(),
 				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(publicPermissionsLayout.getPlid()),
-				guestRole.getRoleId(), ActionKeys.VIEW);
+				String.valueOf(layout.getPlid()), role.getRoleId(),
+				ActionKeys.VIEW);
 
 		Assert.assertFalse(hasGuestViewPermission);
 
-		Role siteMemberRole = _roleLocalService.getRole(
-			publicLayout.getCompanyId(), RoleConstants.SITE_MEMBER);
+		role = _roleLocalService.getRole(
+			layout.getCompanyId(), RoleConstants.SITE_MEMBER);
 
 		boolean hasSiteMemberViewPermission =
 			_resourcePermissionLocalService.hasResourcePermission(
-				publicPermissionsLayout.getCompanyId(),
-				publicPermissionsLayout.getModelClassName(),
+				layout.getCompanyId(), layout.getModelClassName(),
 				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(publicPermissionsLayout.getPlid()),
-				siteMemberRole.getRoleId(), ActionKeys.VIEW);
+				String.valueOf(layout.getPlid()), role.getRoleId(),
+				ActionKeys.VIEW);
 
 		Assert.assertTrue(hasSiteMemberViewPermission);
 
 		boolean hasSiteMemberUpdateLayoutContentPermission =
 			_resourcePermissionLocalService.hasResourcePermission(
-				publicPermissionsLayout.getCompanyId(),
-				publicPermissionsLayout.getModelClassName(),
+				layout.getCompanyId(), layout.getModelClassName(),
 				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(publicPermissionsLayout.getPlid()),
-				siteMemberRole.getRoleId(), ActionKeys.UPDATE_LAYOUT_CONTENT);
+				String.valueOf(layout.getPlid()), role.getRoleId(),
+				ActionKeys.UPDATE_LAYOUT_CONTENT);
 
 		Assert.assertTrue(hasSiteMemberUpdateLayoutContentPermission);
 
-		Role testRole4Role = _roleLocalService.getRole(
-			publicLayout.getCompanyId(), "Test Role 4");
+		role = _roleLocalService.getRole(layout.getCompanyId(), "Test Role 4");
 
 		boolean hasTestRole4ViewPermission =
 			_resourcePermissionLocalService.hasResourcePermission(
-				publicPermissionsLayout.getCompanyId(),
-				publicPermissionsLayout.getModelClassName(),
+				layout.getCompanyId(), layout.getModelClassName(),
 				ResourceConstants.SCOPE_GROUP_TEMPLATE,
-				String.valueOf(publicPermissionsLayout.getPlid()),
-				testRole4Role.getRoleId(), ActionKeys.VIEW);
+				String.valueOf(layout.getPlid()), role.getRoleId(),
+				ActionKeys.VIEW);
 
 		Assert.assertTrue(hasTestRole4ViewPermission);
 
-		List<Layout> publicChildLayouts = publicLayout.getAllChildren();
-
-		Assert.assertEquals(
-			publicChildLayouts.toString(), 1, publicChildLayouts.size());
-
-		Layout publicChildLayout = publicChildLayouts.get(0);
-
-		Assert.assertEquals(
-			"Test Public Child Layout",
-			publicChildLayout.getName(LocaleUtil.getSiteDefault()));
-
-		publicLayout = _layoutLocalService.getLayoutByFriendlyURL(
+		layout = _layoutLocalService.getLayoutByFriendlyURL(
 			group.getGroupId(), false, "/home");
 
 		Assert.assertEquals(
 			PropsUtil.get("default.guest.public.layout.name"),
-			publicLayout.getName(LocaleUtil.getSiteDefault()));
+			layout.getName(LocaleUtil.getSiteDefault()));
 		Assert.assertNotEquals(
 			PropsUtil.get("default.user.private.layout.name"),
-			publicLayout.getName(LocaleUtil.SPAIN));
-
+			layout.getName(LocaleUtil.SPAIN));
 		Assert.assertEquals(
 			PropsUtil.get("default.guest.public.layout.friendly.url"),
-			publicLayout.getFriendlyURL(LocaleUtil.getSiteDefault()));
+			layout.getFriendlyURL(LocaleUtil.getSiteDefault()));
 
 		SitePageResource.Builder sitePageResourceBuilder =
 			_sitePageResourceFactory.create();
@@ -1377,6 +1424,36 @@ public class BundleSiteInitializerTest {
 		Assert.assertFalse(
 			pageDefinitionString.contains(
 				"[$OBJECT_DEFINITION_ID:TestObjectDefinition3$]"));
+
+		layout = _layoutLocalService.getLayoutByFriendlyURL(
+			group.getGroupId(), false, "/test-url-layout");
+
+		Assert.assertEquals(
+			"Test URL Layout", layout.getName(LocaleUtil.getSiteDefault()));
+		Assert.assertEquals("url", layout.getType());
+		Assert.assertEquals(
+			"url=/test-public-layout\n", layout.getTypeSettings());
+		Assert.assertFalse(layout.isHidden());
+	}
+
+	private void _assertResourceAction(
+			String[] actionIds, ResourcePermission resourcePermission)
+		throws Exception {
+
+		long resourceActionBitwiseValue = 0;
+
+		for (String actionId : actionIds) {
+			ResourceAction resourceAction =
+				_resourceActionLocalService.getResourceAction(
+					resourcePermission.getName(), actionId);
+
+			Assert.assertNotNull(resourceAction);
+
+			resourceActionBitwiseValue += resourceAction.getBitwiseValue();
+		}
+
+		Assert.assertEquals(
+			resourceActionBitwiseValue, resourcePermission.getActionIds());
 	}
 
 	private void _assertResourcePermission(Group group) throws Exception {
@@ -1385,19 +1462,42 @@ public class BundleSiteInitializerTest {
 
 		ResourcePermission resourcePermission =
 			_resourcePermissionLocalService.fetchResourcePermission(
-				group.getCompanyId(), "com.liferay.commerce.product", 1,
+				group.getCompanyId(), "com.liferay.commerce.product",
+				ResourceConstants.SCOPE_COMPANY,
 				String.valueOf(group.getCompanyId()), role.getRoleId());
 
 		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(new String[] {"VIEW_PRICE"}, resourcePermission);
 
 		role = _roleLocalService.fetchRole(group.getCompanyId(), "Test Role 2");
 
 		resourcePermission =
 			_resourcePermissionLocalService.fetchResourcePermission(
-				group.getCompanyId(), "com.liferay.commerce.product", 2,
+				group.getCompanyId(), "com.liferay.commerce.product",
+				ResourceConstants.SCOPE_GROUP,
 				String.valueOf(group.getGroupId()), role.getRoleId());
 
 		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(new String[] {"VIEW_PRICE"}, resourcePermission);
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				group.getCompanyId(), "C_TestObjectDefinition3");
+
+		resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				group.getCompanyId(),
+				"com.liferay.object.model.ObjectDefinition#" +
+					objectDefinition.getObjectDefinitionId(),
+				ResourceConstants.SCOPE_COMPANY,
+				String.valueOf(group.getCompanyId()), role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(
+			new String[] {"DELETE", "UPDATE", "VIEW"}, resourcePermission);
 	}
 
 	private void _assertRoles(Group group) {
@@ -1499,25 +1599,6 @@ public class BundleSiteInitializerTest {
 		Assert.assertEquals(
 			"com.liferay.portal.kernel.model.User", segmentsEntry1.getType());
 
-		Layout layout = _layoutLocalService.fetchLayoutByFriendlyURL(
-			groupId, false, "/test-public-layout");
-
-		Layout draftLayout = layout.fetchDraftLayout();
-
-		SegmentsExperience segmentsExperience1 =
-			_segmentsExperienceLocalService.fetchSegmentsExperience(
-				groupId, "TEST-SEGMENTS-EXPERIENCE-1",
-				_portal.getClassNameId(Layout.class), draftLayout.getClassPK());
-
-		Assert.assertNotNull(segmentsExperience1);
-		Assert.assertEquals(
-			segmentsEntry1.getSegmentsEntryId(),
-			segmentsExperience1.getSegmentsEntryId());
-		Assert.assertEquals(
-			"Test Segments Experience 1",
-			segmentsExperience1.getName(LocaleUtil.getSiteDefault()));
-		Assert.assertTrue(segmentsExperience1.isActive());
-
 		SegmentsEntry segmentsEntry2 =
 			_segmentsEntryLocalService.fetchSegmentsEntry(
 				groupId, "TEST-SEGMENTS-ENTRY-2", true);
@@ -1530,19 +1611,40 @@ public class BundleSiteInitializerTest {
 		Assert.assertEquals(
 			"com.liferay.portal.kernel.model.User", segmentsEntry2.getType());
 
-		SegmentsExperience segmentsExperience2 =
-			_segmentsExperienceLocalService.fetchSegmentsExperience(
-				groupId, "TEST-SEGMENTS-EXPERIENCE-2",
-				_portal.getClassNameId(Layout.class), draftLayout.getClassPK());
+		Layout layout = _layoutLocalService.fetchLayoutByFriendlyURL(
+			groupId, false, "/test-public-layout");
 
-		Assert.assertNotNull(segmentsExperience2);
+		Layout draftLayout = layout.fetchDraftLayout();
+
+		LayoutPageTemplateStructure layoutPageTemplateStructure =
+			_layoutPageTemplateStructureLocalService.
+				fetchLayoutPageTemplateStructure(
+					draftLayout.getGroupId(), draftLayout.getPlid());
+
+		List<SegmentsExperience> segmentsExperiences =
+			_segmentsExperienceLocalService.getSegmentsExperiences(
+				groupId,
+				new long[] {
+					segmentsEntry1.getSegmentsEntryId(),
+					segmentsEntry2.getSegmentsEntryId()
+				},
+				_portal.getClassNameId(Layout.class), draftLayout.getClassPK(),
+				true);
+
 		Assert.assertEquals(
-			segmentsEntry2.getSegmentsEntryId(),
-			segmentsExperience2.getSegmentsEntryId());
-		Assert.assertEquals(
-			"Test Segments Experience 2",
-			segmentsExperience2.getName(LocaleUtil.getSiteDefault()));
-		Assert.assertTrue(segmentsExperience2.isActive());
+			segmentsExperiences.toString(), 2, segmentsExperiences.size());
+
+		SegmentsExperience segmentsExperience1 = segmentsExperiences.get(0);
+
+		_assertLayoutStructureItems(
+			layoutPageTemplateStructure, 3,
+			segmentsExperience1.getSegmentsExperienceId());
+
+		SegmentsExperience segmentsExperience2 = segmentsExperiences.get(1);
+
+		_assertLayoutStructureItems(
+			layoutPageTemplateStructure, 3,
+			segmentsExperience2.getSegmentsExperienceId());
 	}
 
 	private void _assertSiteConfiguration(Long groupId) {
@@ -2054,6 +2156,9 @@ public class BundleSiteInitializerTest {
 	@Inject
 	private ProductSpecificationResource.Factory
 		_productSpecificationResourceFactory;
+
+	@Inject
+	private ResourceActionLocalService _resourceActionLocalService;
 
 	@Inject
 	private ResourcePermissionLocalService _resourcePermissionLocalService;

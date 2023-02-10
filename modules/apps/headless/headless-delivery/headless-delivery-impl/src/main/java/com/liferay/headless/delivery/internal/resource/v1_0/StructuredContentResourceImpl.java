@@ -404,6 +404,13 @@ public class StructuredContentResourceImpl
 					journalFolder.getUserId(), JournalConstants.RESOURCE_NAME,
 					journalFolder.getGroupId())
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_ARTICLE, journalFolder.getFolderId(),
+					"postStructuredContentFolderStructuredContentBatch",
+					journalFolder.getUserId(), JournalConstants.RESOURCE_NAME,
+					journalFolder.getGroupId())
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, journalFolder.getFolderId(),
@@ -507,17 +514,17 @@ public class StructuredContentResourceImpl
 			_journalArticleService.updateArticle(
 				journalArticle.getGroupId(), journalArticle.getFolderId(),
 				journalArticle.getArticleId(), journalArticle.getVersion(),
-				LocalizedMapUtil.patch(
+				LocalizedMapUtil.patchLocalizedMap(
 					journalArticle.getTitleMap(),
 					contextAcceptLanguage.getPreferredLocale(),
 					structuredContent.getTitle(),
 					structuredContent.getTitle_i18n()),
-				LocalizedMapUtil.patch(
+				LocalizedMapUtil.patchLocalizedMap(
 					journalArticle.getDescriptionMap(),
 					contextAcceptLanguage.getPreferredLocale(),
 					structuredContent.getDescription(),
 					structuredContent.getDescription_i18n()),
-				LocalizedMapUtil.patch(
+				LocalizedMapUtil.patchLocalizedMap(
 					journalArticle.getFriendlyURLMap(),
 					contextAcceptLanguage.getPreferredLocale(),
 					structuredContent.getFriendlyUrlPath(),
@@ -536,7 +543,9 @@ public class StructuredContentResourceImpl
 				0, true, 0, 0, 0, 0, 0, true, true, false, null, null, null,
 				null,
 				_createServiceContext(
+					_getAssetCategoryIds(journalArticle, structuredContent),
 					_getAssetPriority(journalArticle, structuredContent),
+					_getAssetTagNames(journalArticle, structuredContent),
 					journalArticle.getGroupId(), structuredContent)));
 	}
 
@@ -750,17 +759,19 @@ public class StructuredContentResourceImpl
 				localDateTime.getHour(), localDateTime.getMinute(), 0, 0, 0, 0,
 				0, true, 0, 0, 0, 0, 0, true, true, false, null, null, null,
 				null,
-				_createServiceContext(priority, groupId, structuredContent)));
+				_createServiceContext(
+					structuredContent.getTaxonomyCategoryIds(), priority,
+					structuredContent.getKeywords(), groupId,
+					structuredContent)));
 	}
 
 	private ServiceContext _createServiceContext(
-		double assetPriority, long groupId,
-		StructuredContent structuredContent) {
+		Long[] assetCategoryIds, double assetPriority, String[] assetTagNames,
+		long groupId, StructuredContent structuredContent) {
 
 		ServiceContext serviceContext =
 			ServiceContextRequestUtil.createServiceContext(
-				structuredContent.getTaxonomyCategoryIds(),
-				structuredContent.getKeywords(),
+				assetCategoryIds, assetTagNames,
 				_getExpandoBridgeAttributes(structuredContent), groupId,
 				contextHttpServletRequest,
 				structuredContent.getViewableByAsString());
@@ -789,6 +800,27 @@ public class StructuredContentResourceImpl
 		};
 	}
 
+	private Long[] _getAssetCategoryIds(
+			JournalArticle journalArticle, StructuredContent structuredContent)
+		throws Exception {
+
+		if ((journalArticle == null) ||
+			(structuredContent.getTaxonomyCategoryIds() != null)) {
+
+			return structuredContent.getTaxonomyCategoryIds();
+		}
+
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				JournalArticle.class);
+
+		AssetEntry assetEntry = assetRendererFactory.getAssetEntry(
+			JournalArticle.class.getName(),
+			journalArticle.getResourcePrimKey());
+
+		return ArrayUtil.toLongArray(assetEntry.getCategoryIds());
+	}
+
 	private double _getAssetPriority(
 			JournalArticle journalArticle, StructuredContent structuredContent)
 		throws Exception {
@@ -808,6 +840,27 @@ public class StructuredContentResourceImpl
 			journalArticle.getResourcePrimKey());
 
 		return assetEntry.getPriority();
+	}
+
+	private String[] _getAssetTagNames(
+			JournalArticle journalArticle, StructuredContent structuredContent)
+		throws Exception {
+
+		if ((journalArticle == null) ||
+			(structuredContent.getKeywords() != null)) {
+
+			return structuredContent.getKeywords();
+		}
+
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				JournalArticle.class);
+
+		AssetEntry assetEntry = assetRendererFactory.getAssetEntry(
+			JournalArticle.class.getName(),
+			journalArticle.getResourcePrimKey());
+
+		return ArrayUtil.toStringArray(assetEntry.getTagNames());
 	}
 
 	private String _getDDMTemplateKey(DDMStructure ddmStructure) {
@@ -1207,7 +1260,9 @@ public class StructuredContentResourceImpl
 				0, true, 0, 0, 0, 0, 0, true, true, false, null, null, null,
 				null,
 				_createServiceContext(
+					_getAssetCategoryIds(journalArticle, structuredContent),
 					_getAssetPriority(journalArticle, structuredContent),
+					_getAssetTagNames(journalArticle, structuredContent),
 					journalArticle.getGroupId(), structuredContent)));
 	}
 
