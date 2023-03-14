@@ -3,7 +3,7 @@ definition {
 
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property testray.main.component.name = "Display Pages";
+	property testray.main.component.name = "Display Page Templates";
 
 	setUp {
 		task ("Set up instance and sign in") {
@@ -148,11 +148,11 @@ definition {
 
 			AssertElementPresent(
 				key_title = "General Settings",
-				locator1 = "Header#H4_TITLE");
+				locator1 = "Header#H3_TITLE");
 
 			AssertElementPresent(
 				key_title = "Sitemap",
-				locator1 = "Header#H4_TITLE");
+				locator1 = "Header#H3_TITLE");
 		}
 	}
 

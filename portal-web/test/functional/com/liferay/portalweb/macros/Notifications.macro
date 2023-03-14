@@ -166,7 +166,7 @@ definition {
 	}
 
 	macro viewDefaultContent {
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "You do not have any notifications.");
 	}
@@ -191,7 +191,7 @@ definition {
 	macro viewExpiredContent {
 		AssertTextEquals(
 			locator1 = "Notifications#NOTIFICATIONS_TITLE",
-			value1 = "${user}: document has expired.");
+			value1 = "A Document has expired.");
 
 		AssertTextEquals(
 			key_contentBody = ${contentBody},

@@ -61,7 +61,7 @@ definition {
 
 	test AddElementToQueryBuilder {
 		property environment.acceptance = "true";
-		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,solaris,suse,ubuntu,windows";
+		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
 		property portal.acceptance = "true";
 
 		Blueprints.openBlueprintsAdmin();
@@ -703,7 +703,7 @@ definition {
 
 		var fileContent = FileUtil.read("${outputDir}/sxpElement.json");
 
-		var customElementJson = StringUtil.replace(${fileContent}, "Boost Asset Type", "Boost Results of Web Content Articles");
+		var customElementJson = StringUtil.replace(${fileContent}, "boost-asset-type", "Boost Results of Web Content Articles");
 
 		Click(locator1 = "Modal#CLOSE_BUTTON");
 
@@ -796,8 +796,6 @@ definition {
 	}
 
 	test BoostCustomLiferayObjectType {
-		property app.server.types = "jboss,tomcat,weblogic,wildfly";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 501",
 			objectName = "CustomObject501",
@@ -2893,7 +2891,7 @@ definition {
 			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_CELL",
 			value1 = "Test Test");
 
-		var currentDate = DateUtil.getFormattedCurrentDate("MMM d, yyyy");
+		var currentDate = DateUtil.getCurrentYear();
 
 		AssertTextEquals.assertPartialText(
 			cellPosition = 6,
@@ -2978,8 +2976,6 @@ definition {
 	}
 
 	test ViewBlueprintsPreviewLocalizedResults {
-		property app.server.types = "tomcat";
-
 		Blueprints.openBlueprintsAdmin();
 
 		Blueprints.createBlueprint(title = "Test Blueprint");
@@ -3114,17 +3110,49 @@ definition {
 			contributorClass = "AssetCategoryKeywordQueryContributor",
 			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_ON_OFF_TOGGLE");
 
+		Type(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "AccountEntryModelPreFilterContributor");
+
+		KeyPress(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "\RETURN");
+
 		Uncheck.uncheckToggleSwitch(
 			contributorClass = "AccountEntryModelPreFilterContributor",
 			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_ON_OFF_TOGGLE");
+
+		Type(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "AssetCategoryIdsQueryPreFilterContributor");
+
+		KeyPress(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "\RETURN");
 
 		Uncheck.uncheckToggleSwitch(
 			contributorClass = "AssetCategoryIdsQueryPreFilterContributor",
 			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_ON_OFF_TOGGLE");
 
+		Type(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "AssetEntryModelPreFilterContributor");
+
+		KeyPress(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "\RETURN");
+
 		Uncheck.uncheckToggleSwitch(
 			contributorClass = "AssetEntryModelPreFilterContributor",
 			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_ON_OFF_TOGGLE");
+
+		Type(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "");
+
+		KeyPress(
+			locator1 = "Blueprints#BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR",
+			value1 = "\RETURN");
 
 		Button.click(button = "Filter");
 
@@ -4042,7 +4070,7 @@ definition {
 
 		AssertTextEquals.assertPartialText(
 			locator1 = "Modal#BODY",
-			value1 = "Boost All Keywords Match");
+			value1 = "boost-all-keywords-match");
 	}
 
 	test ViewElementsAdminTableValues {
@@ -4086,7 +4114,7 @@ definition {
 			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_CELL",
 			value1 = "Test Test");
 
-		var currentDate = DateUtil.getFormattedCurrentDate("MMM d, yyyy");
+		var currentDate = DateUtil.getCurrentYear();
 
 		AssertTextEquals.assertPartialText(
 			cellPosition = 6,
@@ -4130,8 +4158,6 @@ definition {
 
 	@description = "This is a use case for LPS-147066."
 	test ViewLinksToLiferayDocumentation {
-		property search.environment.suite.exclude = "true";
-
 		Blueprints.openBlueprintsAdmin();
 
 		Blueprints.createBlueprint(title = "Test Blueprint");

@@ -551,6 +551,8 @@ definition {
 
 	@priority = 4
 	test AddRepeatingWeekly2Times {
+		property portal.upstream = "quarantine";
+
 		CalendarNavigator.gotoConfiguration();
 
 		CalendarConfiguration.editTimeZonePacific();
@@ -899,7 +901,7 @@ definition {
 			endDateTime = " 8:00 PM",
 			startDateTime = " 7:00 PM");
 
-		Button.clickSubmitForPublication();
+		Button.clickSubmitForWorkflow();
 
 		IFrame.closeFrame();
 
@@ -927,7 +929,7 @@ definition {
 			endDateTime = " 8:00 PM",
 			startDateTime = " 7:00 PM");
 
-		Button.clickSubmitForPublication();
+		Button.clickSubmitForWorkflow();
 
 		IFrame.closeFrame();
 
@@ -1070,7 +1072,7 @@ definition {
 			endDateTime = " 8:00 PM",
 			startDateTime = " 7:00 PM");
 
-		Button.clickSubmitForPublication();
+		Button.clickSubmitForWorkflow();
 
 		IFrame.closeFrame();
 

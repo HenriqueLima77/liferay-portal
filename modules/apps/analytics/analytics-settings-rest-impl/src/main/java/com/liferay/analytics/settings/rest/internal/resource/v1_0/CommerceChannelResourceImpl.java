@@ -21,6 +21,7 @@ import com.liferay.analytics.settings.rest.internal.dto.v1_0.converter.CommerceC
 import com.liferay.analytics.settings.rest.internal.dto.v1_0.converter.CommerceChannelDTOConverterContext;
 import com.liferay.analytics.settings.rest.internal.util.SortUtil;
 import com.liferay.analytics.settings.rest.resource.v1_0.CommerceChannelResource;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
@@ -55,13 +56,12 @@ public class CommerceChannelResourceImpl
 		Map<Long, String> analyticsChannelsMap = new HashMap<>();
 
 		com.liferay.analytics.settings.rest.internal.client.pagination.Page
-			<AnalyticsChannel> analyticsChannelsPage =
+			<AnalyticsChannel> page =
 				_analyticsCloudClient.getAnalyticsChannelsPage(
-					contextCompany.getCompanyId(), null, 0, 100, null);
+					contextCompany.getCompanyId(), null, 0, QueryUtil.ALL_POS,
+					null);
 
-		for (AnalyticsChannel analyticsChannel :
-				analyticsChannelsPage.getItems()) {
-
+		for (AnalyticsChannel analyticsChannel : page.getItems()) {
 			analyticsChannelsMap.put(
 				analyticsChannel.getId(), analyticsChannel.getName());
 		}

@@ -27,12 +27,15 @@ import com.liferay.object.rest.internal.jaxrs.exception.mapper.ObjectEntryValues
 import com.liferay.object.rest.internal.jaxrs.exception.mapper.ObjectValidationRuleEngineExceptionMapper;
 import com.liferay.object.rest.internal.jaxrs.exception.mapper.RequiredObjectRelationshipExceptionMapper;
 import com.liferay.object.rest.internal.jaxrs.exception.mapper.UnsupportedOperationExceptionMapper;
+import com.liferay.object.rest.internal.manager.v1_0.ObjectEntry1toMObjectRelationshipElementsParserImpl;
+import com.liferay.object.rest.internal.manager.v1_0.ObjectEntryMtoMObjectRelationshipElementsParserImpl;
 import com.liferay.object.rest.internal.openapi.v1_0.ObjectEntryOpenAPIResourceImpl;
 import com.liferay.object.rest.internal.resource.v1_0.BaseObjectEntryResourceImpl;
 import com.liferay.object.rest.internal.resource.v1_0.ObjectEntryRelatedObjectsResourceImpl;
 import com.liferay.object.rest.internal.resource.v1_0.ObjectEntryResourceFactoryImpl;
 import com.liferay.object.rest.internal.resource.v1_0.ObjectEntryResourceImpl;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
+import com.liferay.object.rest.manager.v1_0.ObjectRelationshipElementsParser;
 import com.liferay.object.rest.openapi.v1_0.ObjectEntryOpenAPIResource;
 import com.liferay.object.rest.openapi.v1_0.ObjectEntryOpenAPIResourceProvider;
 import com.liferay.object.rest.petra.sql.dsl.expression.FilterPredicateFactory;
@@ -50,6 +53,7 @@ import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.object.system.SystemObjectDefinitionMetadataRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.filter.Filter;
@@ -175,6 +179,25 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 	@Override
 	public synchronized void undeploy(ObjectDefinition objectDefinition) {
+		if (objectDefinition.isSystem()) {
+			SystemObjectDefinitionMetadata systemObjectDefinitionMetadata =
+				_systemObjectDefinitionMetadataRegistry.
+					getSystemObjectDefinitionMetadata(
+						objectDefinition.getName());
+
+			if (systemObjectDefinitionMetadata == null) {
+				return;
+			}
+
+			JaxRsApplicationDescriptor jaxRsApplicationDescriptor =
+				systemObjectDefinitionMetadata.getJaxRsApplicationDescriptor();
+
+			_disposeComponentInstances(
+				jaxRsApplicationDescriptor.getRESTContextPath());
+
+			return;
+		}
+
 		String restContextPath = objectDefinition.getRESTContextPath();
 
 		Map<Long, ObjectDefinition> objectDefinitions =
@@ -234,14 +257,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			return;
 		}
 
-		List<ComponentInstance> componentInstances =
-			_componentInstancesMap.remove(restContextPath);
-
-		if (componentInstances != null) {
-			for (ComponentInstance componentInstance : componentInstances) {
-				componentInstance.dispose();
-			}
-		}
+		_disposeComponentInstances(restContextPath);
 
 		ServiceRegistration<?> serviceRegistration1 =
 			_applicationServiceRegistrations.remove(restContextPath);
@@ -274,6 +290,17 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			_objectFieldLocalService, _objectRelationshipService,
 			_objectScopeProviderRegistry,
 			_systemObjectDefinitionMetadataRegistry);
+	}
+
+	private void _disposeComponentInstances(String restContextPath) {
+		List<ComponentInstance> componentInstances =
+			_componentInstancesMap.remove(restContextPath);
+
+		if (componentInstances != null) {
+			for (ComponentInstance componentInstance : componentInstances) {
+				componentInstance.dispose();
+			}
+		}
 	}
 
 	private void _excludeScopedMethods(
@@ -348,7 +375,11 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"companyId", companyIds
 			).put(
+				"liferay.filter.disabled", true
+			).put(
 				"liferay.jackson", false
+			).put(
+				"liferay.objects", true
 			).put(
 				"osgi.jaxrs.application.base",
 				objectDefinition.getRESTContextPath()
@@ -393,12 +424,14 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 								_bundleContext, _dtoConverterRegistry,
 								_objectActionLocalService, objectDefinition,
 								_objectDefinitionLocalService,
+								_objectEntryOpenAPIResourceProvider,
 								_objectFieldLocalService,
 								_objectRelationshipLocalService,
 								_openAPIResource,
 								_systemObjectDefinitionMetadataRegistry),
 							HashMapDictionaryBuilder.<String, Object>put(
-								"companyId", objectDefinition.getCompanyId()
+								"companyId",
+								String.valueOf(objectDefinition.getCompanyId())
 							).put(
 								"openapi.resource", "true"
 							).put(
@@ -408,6 +441,20 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 							).put(
 								"openapi.resource.path",
 								objectDefinition.getRESTContextPath()
+							).build()),
+						_bundleContext.registerService(
+							ObjectRelationshipElementsParser.class,
+							new ObjectEntry1toMObjectRelationshipElementsParserImpl(
+								objectDefinition),
+							HashMapDictionaryBuilder.<String, Object>put(
+								"companyId", objectDefinition.getCompanyId()
+							).build()),
+						_bundleContext.registerService(
+							ObjectRelationshipElementsParser.class,
+							new ObjectEntryMtoMObjectRelationshipElementsParserImpl(
+								objectDefinition),
+							HashMapDictionaryBuilder.<String, Object>put(
+								"companyId", objectDefinition.getCompanyId()
 							).build())));
 
 				return serviceRegistrationsMap;
@@ -459,7 +506,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					).build()),
 				_bundleContext.registerService(
 					ExceptionMapper.class,
-					new ObjectValidationRuleEngineExceptionMapper(),
+					new ObjectValidationRuleEngineExceptionMapper(_language),
 					HashMapDictionaryBuilder.<String, Object>put(
 						"osgi.jaxrs.application.select",
 						"(osgi.jaxrs.name=" + osgiJaxRsName + ")"
@@ -666,6 +713,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private ObjectActionLocalService _objectActionLocalService;

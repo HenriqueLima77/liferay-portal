@@ -54,6 +54,10 @@ definition {
 				var siteTemplateName = "${siteType} Site";
 			}
 
+			if (isSet(siteTemplateTab)) {
+				Site.selectSiteTemplateTab(siteTemplateTab = ${siteTemplateTab});
+			}
+
 			LexiconCard.clickCard(card = ${siteTemplateName});
 
 			SelectFrame(locator1 = "IFrame#MODAL_BODY");
@@ -156,7 +160,7 @@ definition {
 
 		PortletEntry.inputName(name = ${siteName});
 
-		Button.clickAdd();
+		Button.click(button = "Add");
 
 		SelectFrameTop();
 
@@ -198,13 +202,25 @@ definition {
 	}
 
 	macro addSiteTemplateCP {
-		Site.addCP(
-			membershipType = ${membershipType},
-			parentSiteName = ${parentSiteName},
-			siteName = ${siteName},
-			siteTemplateName = ${siteTemplateName},
-			siteType = "Site Template",
-			uncheckPropagation = ${uncheckPropagation});
+		if (isSet(siteTemplateTab)) {
+			Site.addCP(
+				membershipType = ${membershipType},
+				parentSiteName = ${parentSiteName},
+				siteName = ${siteName},
+				siteTemplateName = ${siteTemplateName},
+				siteTemplateTab = ${siteTemplateTab},
+				siteType = "Site Template",
+				uncheckPropagation = ${uncheckPropagation});
+		}
+		else {
+			Site.addCP(
+				membershipType = ${membershipType},
+				parentSiteName = ${parentSiteName},
+				siteName = ${siteName},
+				siteTemplateName = ${siteTemplateName},
+				siteType = "Site Template",
+				uncheckPropagation = ${uncheckPropagation});
+		}
 	}
 
 	macro addVirtualHostsURLCP {
@@ -683,7 +699,7 @@ definition {
 
 		Alert.viewSuccessMessage();
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "No sites were found.");
 
@@ -863,7 +879,7 @@ definition {
 	macro joinViaMySitesPG {
 		var key_siteName = ${siteName};
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "No sites were found.");
 
@@ -1175,7 +1191,7 @@ definition {
 				key_parentSiteName = ${parentSiteName},
 				locator1 = "SitesSelectSite#SITES_TABLE_NAME");
 
-			AssertTextEquals(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No sites were found.");
 		}
@@ -1183,6 +1199,20 @@ definition {
 		Close(locator1 = "null");
 
 		SelectFrame(value1 = "relative=top");
+	}
+
+	macro selectSiteTemplateTab {
+		if (${siteTemplateTab} == "Custom Site Templates") {
+			Navigator.gotoNavTab(navTab = "Custom Site Templates");
+
+			Navigator.viewActivatedNavTab(navTab = "Custom Site Templates");
+		}
+
+		if (${siteTemplateTab} == "Provided by Liferay") {
+			Navigator.gotoNavTab(navTab = "Provided by Liferay");
+
+			Navigator.viewActivatedNavTab(navTab = "Provided by Liferay");
+		}
 	}
 
 	macro tearDownCP {
@@ -1485,20 +1515,6 @@ definition {
 		AssertVisible(
 			key_tableEntry = ${siteName},
 			locator1 = "LexiconTable#TABLE_ENTRY_ELLIPSIS");
-	}
-
-	macro viewSelectSiteViaPersonalMenuMySites {
-		AssertElementPresent(locator1 = "Sites#SELECT_SITE_MODAL");
-
-		AssertTextEquals(
-			locator1 = "Sites#SELECT_SITE_MODAL_HEADER",
-			value1 = "Select Site");
-
-		SelectFrame(locator1 = "IFrame#MODAL_BODY");
-
-		AssertElementPresent(
-			key_siteName = ${siteName},
-			locator1 = "Sites#SELECT_SITE_MODAL_CARD_BODY_SITE_NAME");
 	}
 
 	macro viewSiteAdminPermissionsCP {

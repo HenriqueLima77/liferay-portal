@@ -102,6 +102,7 @@ import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -152,7 +153,6 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.NaturalOrderStringComparator;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -600,8 +600,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 			"Liferay-Site-Initializer-Feature-Flag");
 
 		if (Validator.isNotNull(featureFlag) &&
-			!GetterUtil.getBoolean(
-				PropsUtil.get("feature.flag." + featureFlag))) {
+			!FeatureFlagManagerUtil.isEnabled(featureFlag)) {
 
 			return false;
 		}
@@ -783,17 +782,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 				String json = StringUtil.read(url.openStream());
 
 				json = _replace(
-					json, assetListEntryIdsStringUtilReplaceValues,
+					_replace(json, serviceContext),
+					assetListEntryIdsStringUtilReplaceValues,
 					documentsStringUtilReplaceValues);
-
-				Group group = serviceContext.getScopeGroup();
-
-				json = _replace(
-					json,
-					new String[] {"[$GROUP_FRIENDLY_URL$]", "[$GROUP_ID$]"},
-					new String[] {
-						group.getFriendlyURL(), String.valueOf(groupId)
-					});
 
 				zipWriter.addEntry(
 					_removeFirst(fileName, parentResourcePath), json);
@@ -861,19 +852,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 			return;
 		}
 
-		Group group = serviceContext.getScopeGroup();
-
 		json = _replace(
-			_replace(
-				json,
-				new String[] {
-					"[$GROUP_FRIENDLY_URL$]", "[$GROUP_ID$]", "[$GROUP_KEY$]"
-				},
-				new String[] {
-					group.getFriendlyURL(),
-					String.valueOf(serviceContext.getScopeGroupId()),
-					group.getGroupKey()
-				}),
+			_replace(json, serviceContext),
 			assetListEntryIdsStringUtilReplaceValues,
 			clientExtensionEntryIdsStringUtilReplaceValues,
 			ddmStructureEntryIdsStringUtilReplaceValues,
@@ -1014,24 +994,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 				String json = StringUtil.read(url.openStream());
 
 				json = _replace(
-					json, assetListEntryIdsStringUtilReplaceValues,
+					_replace(json, serviceContext),
+					assetListEntryIdsStringUtilReplaceValues,
 					documentsStringUtilReplaceValues,
 					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
 					taxonomyCategoryIdsStringUtilReplaceValues);
-
-				Group group = serviceContext.getScopeGroup();
-
-				json = _replace(
-					json,
-					new String[] {
-						"[$GROUP_FRIENDLY_URL$]", "[$GROUP_ID$]",
-						"[$GROUP_KEY$]"
-					},
-					new String[] {
-						group.getFriendlyURL(),
-						String.valueOf(serviceContext.getScopeGroupId()),
-						group.getGroupKey()
-					});
 
 				String css = _replace(
 					SiteInitializerUtil.read(
@@ -1110,6 +1077,10 @@ public class BundleSiteInitializer implements SiteInitializer {
 			Map<String, String> taxonomyCategoryIdsStringUtilReplaceValues)
 		throws Exception {
 
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-162765")) {
+			return;
+		}
+
 		Enumeration<URL> enumeration = _bundle.findEntries(
 			"/site-initializer/layout-utility-page-entries", StringPool.STAR,
 			true);
@@ -1135,24 +1106,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 				String json = StringUtil.read(url.openStream());
 
 				json = _replace(
-					json, assetListEntryIdsStringUtilReplaceValues,
+					_replace(json, serviceContext),
+					assetListEntryIdsStringUtilReplaceValues,
 					documentsStringUtilReplaceValues,
 					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
 					taxonomyCategoryIdsStringUtilReplaceValues);
-
-				Group group = serviceContext.getScopeGroup();
-
-				json = _replace(
-					json,
-					new String[] {
-						"[$GROUP_FRIENDLY_URL$]", "[$GROUP_ID$]",
-						"[$GROUP_KEY$]"
-					},
-					new String[] {
-						group.getFriendlyURL(),
-						String.valueOf(serviceContext.getScopeGroupId()),
-						group.getGroupKey()
-					});
 
 				String css = _replace(
 					SiteInitializerUtil.read(
@@ -2546,7 +2504,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 				FileUtil.getShortFileName(
 					FileUtil.stripExtension(url.getPath())),
 				_replace(
-					StringUtil.read(url.openStream()),
+					_replace(StringUtil.read(url.openStream()), serviceContext),
 					documentsStringUtilReplaceValues));
 		}
 
@@ -4470,12 +4428,26 @@ public class BundleSiteInitializer implements SiteInitializer {
 			s, "[$", "$]", aggregatedStringUtilReplaceValues);
 	}
 
-	private String _replace(String s, String oldSub, String newSub) {
-		return StringUtil.replace(s, oldSub, newSub);
+	private String _replace(String s, ServiceContext serviceContext)
+		throws Exception {
+
+		Group group = serviceContext.getScopeGroup();
+
+		return StringUtil.replace(
+			s,
+			new String[] {
+				"[$COMPANY_ID$]", "[$GROUP_FRIENDLY_URL$]", "[$GROUP_ID$]",
+				"[$GROUP_KEY$]", "[$PORTAL_URL$]"
+			},
+			new String[] {
+				String.valueOf(group.getCompanyId()), group.getFriendlyURL(),
+				String.valueOf(serviceContext.getScopeGroupId()),
+				group.getGroupKey(), serviceContext.getPortalURL()
+			});
 	}
 
-	private String _replace(String s, String[] oldSubs, String[] newSubs) {
-		return StringUtil.replace(s, oldSubs, newSubs);
+	private String _replace(String s, String oldSub, String newSub) {
+		return StringUtil.replace(s, oldSub, newSub);
 	}
 
 	private void _setDefaultLayoutUtilityPageEntries(
@@ -4610,7 +4582,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 	}
 
 	private void _updateGroupSiteInitializerKey(long groupId) throws Exception {
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-165482"))) {
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-165482")) {
 			return;
 		}
 

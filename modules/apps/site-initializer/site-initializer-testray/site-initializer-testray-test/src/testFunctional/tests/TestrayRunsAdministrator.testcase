@@ -8,19 +8,21 @@ definition {
 	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 	property testray.main.component.name = "Site Initializer Testray";
 
+	var testSiteName = "Testray 2";
+
 	setUp {
 		task ("Login and create a Testray Site") {
 			TestCase.setUpPortalInstance();
 
 			User.firstLoginPG();
 
-			Testray.addTestraySite();
+			Testray.addTestraySite(siteName = ${testSiteName});
 
 			Refresh();
 		}
 
 		task ("Go to Categories on Manage Sidebar and Add two Category") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			TestrayLayout.clickManageOnSidebar();
 
@@ -138,7 +140,7 @@ definition {
 		}
 
 		task ("Go to Testray 2 and change the pagination") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.changePagination(
 				numberItems = 20,
@@ -184,7 +186,7 @@ definition {
 				listOption = "Option 1",
 				listOption1 = "Option 3");
 
-			Testray.assertItemName(key_name = 01);
+			Testray.assertItemName(text = 01);
 
 			Testray.checkSuccessAlertAppearsAndDisappears();
 		}
@@ -192,7 +194,7 @@ definition {
 		task ("Then run should not appear on the list") {
 			TestrayRun.deleteRun(runName = 01);
 
-			Testray.assertItemNotPresent(key_name = 01);
+			Testray.assertItemNotPresent(text = 01);
 		}
 	}
 
@@ -216,7 +218,7 @@ definition {
 				listOption = "Option 1",
 				listOption1 = "Option 3");
 
-			Testray.assertItemName(key_name = 01);
+			Testray.assertItemName(text = 01);
 
 			TestrayRun.assertValueRun(valueRun = "Option 1");
 

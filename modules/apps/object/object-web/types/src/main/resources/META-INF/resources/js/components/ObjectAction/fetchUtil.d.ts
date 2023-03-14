@@ -12,18 +12,11 @@
  * details.
  */
 
-/// <reference types="react" />
-
-import {ClaySelect} from '@clayui/form';
-export declare type ObjectsOptionsList = Array<
-	(
-		| React.ComponentProps<typeof ClaySelect.Option>
-		| React.ComponentProps<typeof ClaySelect.OptGroup>
-	) & {
-		options?: Array<React.ComponentProps<typeof ClaySelect.Option>>;
-		type?: 'group';
-	}
->;
+export declare type ObjectsOptionsList = {
+	label: string;
+	options: LabelValueObject[];
+	type: string;
+}[];
 export declare function fetchObjectDefinitions(
 	objectDefinitionsRelationshipsURL: string,
 	values: Partial<ObjectAction>,
@@ -33,12 +26,12 @@ export declare function fetchObjectDefinitions(
 export declare function fetchObjectDefinitionFields(
 	objectDefinitionId: number,
 	objectDefinitionExternalReferenceCode: string,
+	systemObject: boolean,
 	values: Partial<ObjectAction>,
-	isValidField: ({
-		businessType,
-		objectFieldSettings,
-		system,
-	}: ObjectField) => void,
+	isValidField: (
+		{businessType, name, objectFieldSettings, system}: ObjectField,
+		isObjectActionSystem?: boolean
+	) => boolean,
 	setCurrentObjectDefinitionFields: (values: ObjectField[]) => void,
 	setValues: (values: Partial<ObjectAction>) => void
 ): Promise<void>;

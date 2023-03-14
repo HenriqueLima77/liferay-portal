@@ -70,6 +70,8 @@ definition {
 	@description = "This is a use case for LPS-98170"
 	@priority = 4
 	test AssertAssetPriorityNotBeResetAfterPublication {
+		property test.name.skip.portal.instance = "StagingUsecase#AssertAssetPriorityNotBeResetAfterPublication";
+
 		task ("Given: User add a page and an AP portlet to the default page") {
 			JSONLayout.addPublicLayout(
 				groupName = "Site Name (Staging)",
@@ -431,7 +433,7 @@ definition {
 
 			Staging.gotoNavTab(tabName = "Scheduled");
 
-			AssertTextEquals(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No scheduled publish processes were found.");
 		}
@@ -461,7 +463,7 @@ definition {
 
 			Staging.deletePublishTask(publicationTitle = "Initial Publish Process");
 
-			AssertTextEquals(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No publish processes were found.");
 		}
@@ -776,7 +778,7 @@ definition {
 	test ImportLARsOnStagedSite {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "StagingUsecase#ImportLARsOnStagedSite";
-		property testray.component.names = "Site Pages Administration,Training,Web Content Administration";
+		property testray.component.names = "Page Administration,Training,Web Content Administration";
 
 		task ("Given: User import home page from LAR file on staging site") {
 			LAR.importSiteCP(
@@ -1287,6 +1289,8 @@ definition {
 
 	@priority = 3
 	test PublishWebContentFriendlyURLEncoding {
+		property test.name.skip.portal.instance = "StagingUsecase#PublishWebContentFriendlyURLEncoding";
+
 		task ("Given: User add 2 WC with friendly URL") {
 			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
 
@@ -1978,6 +1982,8 @@ definition {
 	@description = "This is a use case for LPS-91017, LPS-89646."
 	@priority = 4
 	test StagingPublishWCWithWebContentFieldViaAP {
+		property test.name.skip.portal.instance = "StagingUsecase#StagingPublishWCWithWebContentFieldViaAP";
+
 		task ("Given: User add a new AP widget and a WC to the staging site") {
 			JSONLayout.addWidgetToPublicLayout(
 				column = 1,
@@ -2307,6 +2313,8 @@ definition {
 
 	@priority = 4
 	test ViewPublishDMWithModifiedTitle {
+		property test.name.skip.portal.instance = "StagingUsecase#ViewPublishDMWithModifiedTitle";
+
 		task ("Given: User add a new AP widget to the staging site") {
 			JSONLayout.addWidgetToPublicLayout(
 				column = 1,
@@ -2362,7 +2370,7 @@ definition {
 	@description = "This is a use case for LPS-96721."
 	@priority = 4
 	test ViewPublishedContentWithSpecialCharsInDocumentTitle {
-		property test.name.skip.portal.instance = "Staging#ViewPublishedContentWithSpecialCharsInDocumentTitle";
+		property test.name.skip.portal.instance = "StagingUsecase#ViewPublishedContentWithSpecialCharsInDocumentTitle";
 
 		task ("Given: User add a new file") {
 			JSONDocument.addFileWithUploadedFile(

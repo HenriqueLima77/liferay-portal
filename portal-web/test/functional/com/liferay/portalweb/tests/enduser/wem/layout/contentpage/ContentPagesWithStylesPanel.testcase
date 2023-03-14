@@ -39,6 +39,8 @@ definition {
 	@priority = 4
 	test AddCustomValuesToSpacing {
 		task ("Given a page creator has a Button fragment on a content page") {
+			TestUtils.maximizeWindow();
+
 			ContentPagesNavigator.openEditContentPage(
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
@@ -123,6 +125,8 @@ definition {
 
 		task ("When the page creator selects an existing token on Padding Left of Spacing") {
 			DropdownMenuItem.click(menuItem = "Spacer 2");
+
+			PageEditor.waitForAutoSave();
 		}
 
 		task ("Then the page creator should see the cleared input field and second token as selected on dropdown menu") {

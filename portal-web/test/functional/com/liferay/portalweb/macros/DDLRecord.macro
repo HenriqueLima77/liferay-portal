@@ -88,7 +88,7 @@ definition {
 
 		Alert.viewSuccessMessage();
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "There are no records.");
 	}
@@ -489,8 +489,8 @@ definition {
 		Click(locator1 = "DDLEditRecord#LINK_TO_PAGE_PAGE_RADIO");
 	}
 
-	macro submitForPublication {
-		Button.clickSubmitForPublication();
+	macro submitForWorkflow {
+		Button.clickSubmitForWorkflow();
 
 		Alert.viewSuccessMessage();
 	}
@@ -857,7 +857,7 @@ definition {
 	}
 
 	macro viewNoRecords {
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "There are no records.");
 	}

@@ -15,13 +15,14 @@
 package com.liferay.batch.engine.internal.writer;
 
 import com.liferay.batch.engine.BatchEngineTaskContentType;
-import com.liferay.batch.engine.internal.auto.deploy.BatchEngineAutoDeployListener;
+import com.liferay.batch.engine.unit.BatchEngineUnitConfiguration;
 
 import java.io.OutputStream;
 import java.io.Serializable;
 
 import java.lang.reflect.Field;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,12 +51,12 @@ public class BatchEngineExportTaskItemWriterBuilder {
 
 		if (_batchEngineTaskContentType == BatchEngineTaskContentType.JSON) {
 			return new JSONBatchEngineExportTaskItemWriterImpl(
-				fieldsMap.keySet(), _fieldNames, _outputStream);
+				_fieldNames, _outputStream);
 		}
 
 		if (_batchEngineTaskContentType == BatchEngineTaskContentType.JSONL) {
 			return new JSONLBatchEngineExportTaskItemWriterImpl(
-				fieldsMap.keySet(), _fieldNames, _outputStream);
+				_fieldNames, _outputStream);
 		}
 
 		if ((_batchEngineTaskContentType == BatchEngineTaskContentType.XLS) ||
@@ -66,18 +67,23 @@ public class BatchEngineExportTaskItemWriterBuilder {
 		}
 
 		if (_batchEngineTaskContentType == BatchEngineTaskContentType.JSONT) {
-			BatchEngineAutoDeployListener.BatchEngineImportConfiguration
-				batchEngineImportConfiguration =
-					new BatchEngineAutoDeployListener.
-						BatchEngineImportConfiguration();
+			BatchEngineUnitConfiguration batchEngineUnitConfiguration =
+				new BatchEngineUnitConfiguration();
 
-			batchEngineImportConfiguration.setClassName(_itemClass.getName());
-			batchEngineImportConfiguration.setVersion("v1.0");
-			batchEngineImportConfiguration.setParameters(_parameters);
+			batchEngineUnitConfiguration.setClassName(_itemClass.getName());
+			batchEngineUnitConfiguration.setVersion("v1.0");
+
+			if (_parameters == null) {
+				_parameters = new HashMap<>();
+			}
+
+			_parameters.computeIfAbsent("createStrategy", key -> "INSERT");
+			_parameters.computeIfAbsent("updateStrategy", key -> "UPDATE");
+
+			batchEngineUnitConfiguration.setParameters(_parameters);
 
 			return new JSONTBatchEngineExportTaskItemWriterImpl(
-				fieldsMap.keySet(), batchEngineImportConfiguration, _fieldNames,
-				_outputStream);
+				batchEngineUnitConfiguration, _fieldNames, _outputStream);
 		}
 
 		throw new IllegalArgumentException(

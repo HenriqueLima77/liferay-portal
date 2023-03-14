@@ -49,6 +49,14 @@
 	},
 	{
 		"actionIds": [
+			"VIEW"
+		],
+		"resourceName": "com.liferay.list.type.model.ListTypeDefinition",
+		"roleName": "EVP Manager",
+		"scope": "1"
+	},
+	{
+		"actionIds": [
 			"ADD_OBJECT_ENTRY"
 		],
 		"resourceName": "com.liferay.object#[$OBJECT_DEFINITION_ID:EVPRequest$]",
@@ -89,6 +97,7 @@
 	},
 	{
 		"actionIds": [
+			"UPDATE",
 			"VIEW"
 		],
 		"resourceName": "com.liferay.object.model.ObjectDefinition#[$OBJECT_DEFINITION_ID:EVPRequest$]",
@@ -113,6 +122,7 @@
 	},
 	{
 		"actionIds": [
+			"UPDATE",
 			"VIEW"
 		],
 		"resourceName": "com.liferay.object.model.ObjectDefinition#[$OBJECT_DEFINITION_ID:EVPOrganization$]",
@@ -139,7 +149,7 @@
 		"actionIds": [
 			"VIEW"
 		],
-		"resourceName": "com.liferay.object.model.ObjectDefinition#[$OBJECT_DEFINITION_ID:EVPData$]",
+		"resourceName": "com.liferay.object.model.ObjectDefinition#[$OBJECT_DEFINITION_ID:EVPHomepageData$]",
 		"roleName": "Guest",
 		"scope": "1"
 	}

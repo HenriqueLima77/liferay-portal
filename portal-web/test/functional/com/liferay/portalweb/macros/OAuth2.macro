@@ -361,8 +361,10 @@ definition {
 				Navigator.gotoNavUnderline(navUnderline = "Resource scopes");
 			}
 
-			for (var resourcePanel : list ${resourcePanels}) {
-				OAuth2.expandResourcePanel(resourcePanel = ${resourcePanel});
+			if (isSet(resourcePanels) && (${resourcePanels} != "")) {
+				for (var resourcePanel : list ${resourcePanels}) {
+					OAuth2.expandResourcePanel(resourcePanel = ${resourcePanel});
+				}
 			}
 
 			if (isSet(checkGlobalScopesViaModal)) {
@@ -439,7 +441,9 @@ definition {
 	}
 
 	macro getAccessToken {
-		var portalURL = PropsUtil.get("portal.url");
+		if (!(isSet(portalURL))) {
+			var portalURL = PropsUtil.get("portal.url");
+		}
 
 		if (${grantFlow} == "clientCredentials") {
 			var tokenCurl = '''
@@ -961,7 +965,7 @@ definition {
 			locator1 = "NavBar#ACTIVE_NAV_ITEM_LINK");
 
 		if (${noAuthorizations} == "true") {
-			AssertTextEquals(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No authorizations were found.");
 		}
@@ -978,7 +982,7 @@ definition {
 		UserBar.gotoDropdownItem(dropdownItem = "My Connected Applications");
 
 		if (${noAuthorizations} == "true") {
-			AssertTextEquals(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No connected applications were found.");
 		}

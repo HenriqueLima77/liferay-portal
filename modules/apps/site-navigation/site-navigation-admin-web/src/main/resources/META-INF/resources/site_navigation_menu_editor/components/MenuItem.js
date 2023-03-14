@@ -14,7 +14,7 @@
 
 import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
 import ClayCard from '@clayui/card';
-import {ClayCheckbox, ClayRadio, ClayRadioGroup} from '@clayui/form';
+import {ClayRadio, ClayRadioGroup} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
 import ClayLayout from '@clayui/layout';
@@ -37,13 +37,14 @@ import {useSetSidebarPanelId} from '../contexts/SidebarPanelIdContext';
 import getFlatItems from '../utils/getFlatItems';
 import getItemPath from '../utils/getItemPath';
 import {useDragItem, useDropTarget} from '../utils/useDragAndDrop';
+import useKeyboardNavigation from '../utils/useKeyboardNavigation';
 
 const DELETION_TYPES = {
 	bulk: 0,
 	single: 1,
 };
 
-export function MenuItem({item}) {
+export function MenuItem({item, onMenuItemRemoved}) {
 	const setItems = useSetItems();
 	const setSelectedMenuItemId = useSetSelectedMenuItemId();
 	const setSidebarPanelId = useSetSidebarPanelId();
@@ -78,6 +79,7 @@ export function MenuItem({item}) {
 				setItems(newItems);
 
 				setSidebarPanelId(null);
+				onMenuItemRemoved();
 			})
 			.catch(({error}) => {
 				openToast({
@@ -137,43 +139,59 @@ export function MenuItem({item}) {
 	const parentItemId =
 		itemPath.length > 1 ? itemPath[itemPath.length - 2] : '0';
 
+	const {
+		isTarget,
+		onBlur,
+		onFocus,
+		onKeyDown,
+		setElement,
+	} = useKeyboardNavigation();
+
 	return (
 		<>
 			<div
 				aria-label={`${title} (${type})`}
 				aria-level={itemPath.length}
+				className="focusable-menu-item site_navigation_menu_editor_MenuItem"
 				data-item-id={item.siteNavigationMenuItemId}
 				data-parent-item-id={parentItemId}
-				ref={targetRef}
-				role="listitem"
+				onBlur={onBlur}
+				onClick={() => {
+					setSelectedMenuItemId(siteNavigationMenuItemId);
+					setSidebarPanelId(SIDEBAR_PANEL_IDS.menuItemSettings);
+				}}
+				onFocus={onFocus}
+				onKeyDown={(event) => {
+					if (event.key === ' ' || event.key === 'Enter') {
+						setSelectedMenuItemId(siteNavigationMenuItemId);
+						setSidebarPanelId(SIDEBAR_PANEL_IDS.menuItemSettings);
+					}
+
+					onKeyDown(event);
+				}}
+				ref={(ref) => {
+					targetRef(ref);
+					setElement(ref);
+				}}
+				role="menuitem"
+				tabIndex={isTarget ? '0' : '-1'}
 			>
 				<ClayCard
-					className={classNames(
-						'site_navigation_menu_editor_MenuItem',
-						{
-							'dragging': isDragging,
-							'site_navigation_menu_editor_MenuItem--selected': selected,
-						}
+					aria-label={sub(
+						Liferay.Language.get('select-x'),
+						`${title} (${type})`
 					)}
+					className={classNames('mb-3', {
+						active: selected,
+						dragging: isDragging,
+					})}
 					selectable
 					style={itemStyle}
 				>
-					<ClayCheckbox
-						aria-label={sub(
-							Liferay.Language.get('select-x'),
-							`${title} (${type})`
-						)}
-						checked={selected}
-						onChange={() => {
-							setSelectedMenuItemId(siteNavigationMenuItemId);
-							setSidebarPanelId(
-								SIDEBAR_PANEL_IDS.menuItemSettings
-							);
-						}}
-					>
-						<ClayCard.Body className="px-0">
+					<ClayCard.Body className="px-0">
+						<div ref={handlerRef}>
 							<ClayCard.Row>
-								<ClayLayout.ContentCol gutters ref={handlerRef}>
+								<ClayLayout.ContentCol gutters>
 									<ClayIcon symbol="drag" />
 								</ClayLayout.ContentCol>
 
@@ -219,6 +237,7 @@ export function MenuItem({item}) {
 											Liferay.Language.get('delete-x'),
 											`${title} (${type})`
 										)}
+										className="delete-item-button"
 										displayType="unstyled"
 										onClick={() =>
 											item.children.length
@@ -227,11 +246,12 @@ export function MenuItem({item}) {
 										}
 										size="sm"
 										symbol="times-circle"
+										tabIndex={isTarget ? '0' : '-1'}
 									/>
 								</ClayLayout.ContentCol>
 							</ClayCard.Row>
-						</ClayCard.Body>
-					</ClayCheckbox>
+						</div>
+					</ClayCard.Body>
 				</ClayCard>
 			</div>
 

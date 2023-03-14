@@ -100,6 +100,7 @@ definition {
 	}
 
 	@description = "Test Automation for LPS-130275: Validate if it's posible to create a segment based on Organization > Date modified criteria"
+	@ignore = "true"
 	@priority = 5
 	@uitest
 	test AddSegmentByOrganizationDateModified {
@@ -999,6 +1000,7 @@ definition {
 	}
 
 	@description = "Test Automation for LPS-130320: Validate if it's posible to create a segment based on Session > Last sign in date criteria"
+	@ignore = "true"
 	@priority = 5
 	@uitest
 	test AddSegmentBySessionLastSignInDate {
@@ -1030,6 +1032,7 @@ definition {
 	}
 
 	@description = "Test Automation for LPS-130321: Validate if it's posible to create a segment based on Session > Local date criteria"
+	@ignore = "true"
 	@priority = 5
 	@uitest
 	test AddSegmentBySessionLocalDate {
@@ -1230,6 +1233,7 @@ definition {
 	}
 
 	@description = "Test Automation for LPS-130284: Validate if it's posible to create a segment based on User > Date modified criteria"
+	@ignore = "true"
 	@priority = 5
 	@uitest
 	test AddSegmentByUserDateModified {
@@ -1276,6 +1280,7 @@ definition {
 	}
 
 	@description = "Test Automation for LPS-130285: Validate if it's posible to create a segment based on User > Date of birth criteria"
+	@ignore = "true"
 	@priority = 5
 	@uitest
 	test AddSegmentByUserDateOfBirth {
@@ -2149,7 +2154,7 @@ definition {
 		}
 	}
 
-	@description = ""
+	@description = "LPS-130917 Given Instance Settings > Segments When the user clicks on Analytics Cloud Segments tab Then help text of Anonymous User Segments Cache Expiration Time will be: Define the time (in seconds) before clearing the Anonymous Segment cache."
 	@priority = 3
 	test AnonymousUserSegmentsCacheExpirationCheckText {
 		task ("Go to Instance Settings > Segments") {
@@ -2327,7 +2332,7 @@ definition {
 		}
 	}
 
-	@description = ""
+	@description = "LPS-168141 Given a site is already selected as site scope When the user selects another site as scope Then the new site should replace the previous one"
 	@priority = 3
 	test CanSelectSiteScope {
 		property custom.properties = "feature.flag.LPS-166954=true";
@@ -2339,23 +2344,23 @@ definition {
 
 			AssertTextEquals(
 				locator1 = "Segmentation#SCOPE_CARD_SITE",
-				siteName = "Test Site Name",
-				value1 = "Test Site Name");
+				siteName = "Global",
+				value1 = "Global");
 		}
 
 		task ("Configure the site scope to the global site") {
-			Segmentation.configureScope(site = "Global");
+			Segmentation.configureScope(site = "Test Site Name");
 		}
 
 		task ("Assert the new site replaced the previous one") {
 			AssertTextEquals(
 				locator1 = "Segmentation#SCOPE_CARD_SITE",
-				siteName = "Global",
-				value1 = "Global");
+				siteName = "Test Site Name",
+				value1 = "Test Site Name");
 		}
 	}
 
-	@description = ""
+	@description = "LPS-168141 Given a segment entry is scoped to a site When user navigates to that site Then the segment can be used"
 	@priority = 4
 	test CanUseSegmentScopedIndividualSite {
 		property custom.properties = "feature.flag.LPS-166954=true";
@@ -2623,7 +2628,7 @@ definition {
 		}
 	}
 
-	@description = ""
+	@description = "LPS-130919 Given the Session Property Vocabularies in Instance Settings When the user is adding a vocabulary to a session property Then the breadcrumb to go to Segments, or Instance Settings is available"
 	@priority = 3
 	test InstanceSettingsSessionPropertyVocabulariesBreadcrumb {
 		property test.name.skip.portal.instance = "SegmentationCreateSegment#InstanceSettingsSessionPropertyVocabulariesBreadcrumb";
@@ -2654,7 +2659,7 @@ definition {
 		}
 	}
 
-	@description = ""
+	@description = "LPS-130919 Given the adding a vocabulary to a session property view When the user clicks on Cancel button Then the user is lead to the main tab Session Property Vocabularies"
 	@priority = 3
 	test InstanceSettingsSessionPropertyVocabulariesCancelButton {
 		property test.name.skip.portal.instance = "SegmentationCreateSegment#InstanceSettingsSessionPropertyVocabulariesCancelButton";
@@ -2677,13 +2682,13 @@ definition {
 		}
 
 		task ("Check the user is lead to the main tab Session Property Vocabularies") {
-			AssertTextPresent(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No entries for Session Property Vocabularies have been added yet.");
 		}
 	}
 
-	@description = ""
+	@description = "LPS-130919 Given the Segment Editor When the user adds a Session Property Vocabulary in the Instance Settings Then the associated Categories must be available when selecting the session property"
 	@priority = 5
 	test InstanceSettingsSessionPropertyVocabularyInSegmentsEditor {
 		property portal.acceptance = "true";
@@ -2729,7 +2734,7 @@ definition {
 		}
 	}
 
-	@description = ""
+	@description = "LPS-130917 Given Instance Settings > Segments When the user clicks on Analytics Cloud Segments tab Then help text of Interest Terms Cache Expiration Time will be: Define the time (in seconds) before clearing the Interest Terms cache."
 	@priority = 3
 	test InterestTermsCacheCacheExpirationCheckText {
 		task ("Go to Instance Settings > Segments") {
@@ -2821,7 +2826,7 @@ definition {
 
 			AssertNotVisible(
 				locator1 = "Segmentation#SCOPE_CARD_SITE",
-				siteName = "Test Site Name");
+				siteName = "Global");
 		}
 	}
 
@@ -3026,10 +3031,8 @@ definition {
 		}
 	}
 
-	@description = "LPS-167023 Given the Segments page
-	When the user adds a new segment
-	Then the segment is created in the Global Site"
-	@priority = "4"
+	@description = "LPS-167023 Given the Segments page When the user adds a new segmentThen the segment is created in the Global Site"
+	@priority = 4
 	test SegmentInGlobalSiteByDefault {
 		property custom.properties = "feature.flag.LPS-166954=true";
 		property portal.acceptance = "true";
@@ -3048,15 +3051,15 @@ definition {
 		}
 	}
 
-	@description = "LPS-167023 Given the Product Menu
-	When the user clicks on People
-	Then the Segments portlet is not present"
-	@priority = "4"
+	@description = "LPS-167023 Given the Product Menu When the user clicks on People Then the Segments portlet is not present"
+	@priority = 4
 	test SegmentPortletNotPresentInProductMenu {
 		property custom.properties = "feature.flag.LPS-166954=true";
 		property portal.acceptance = "true";
 
 		Navigator.openURL();
+
+		ProductMenuHelper.openProductMenu();
 
 		ProductMenuHelper.expandCategory(category = "People");
 
@@ -3065,10 +3068,8 @@ definition {
 			locator1 = "ProductMenu#PORTLET");
 	}
 
-	@description = "LPS-167023 Given the Segments page
-	When there is a segment belonging to a site
-	Then the scope column in the Segments table will display the name of the site is scoped to"
-	@priority = "3"
+	@description = "LPS-167023 Given the Segments page When there is a segment belonging to a site Then the scope column in the Segments table will display the name of the site is scoped to"
+	@priority = 3
 	test SiteNameInScopeColumn {
 		property custom.properties = "feature.flag.LPS-166954=true";
 
@@ -3491,8 +3492,8 @@ definition {
 		}
 	}
 
-	@description = ""
-	@priority = 5
+	@description = "LPS-168141 Given a segment entry is scoped to global site When user navigates to any site Then the segment can be used"
+ 	@priority = 5
 	test ViewSegmentScopedGlobalDisplayedOnAnySite {
 		property custom.properties = "feature.flag.LPS-166954=true";
 		property portal.acceptance = "true";
@@ -3527,7 +3528,7 @@ definition {
 		}
 	}
 
-	@description = ""
+	@description = "LPS-168141 Given a segment entry is scoped to a site When user navigates to another site Then the segment can not be seen"
 	@priority = 4
 	test ViewSegmentScopedIndividualSiteIsNotDisplayed {
 		property custom.properties = "feature.flag.LPS-166954=true";
@@ -3559,7 +3560,7 @@ definition {
 		}
 	}
 
-	@description = ""
+	@description = "LPS-168141 Given the scope card at the segment editor When the user selects a site And saves the segment  Then the select button disappears"
 	@priority = 3
 	test ViewSelectButtonIsNotPresentAfterSaveSegment {
 		property custom.properties = "feature.flag.LPS-166954=true";

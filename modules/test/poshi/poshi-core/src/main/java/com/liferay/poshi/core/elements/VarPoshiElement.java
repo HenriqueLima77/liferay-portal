@@ -120,7 +120,7 @@ public class VarPoshiElement extends PoshiElement {
 	public void parsePoshiScript(String poshiScript)
 		throws PoshiScriptParserException {
 
-		if (poshiScript.startsWith("static")) {
+		if (poshiScript.startsWith("static var")) {
 			addAttribute("static", "true");
 
 			poshiScript = poshiScript.replaceFirst("static", "");
@@ -180,6 +180,14 @@ public class VarPoshiElement extends PoshiElement {
 		}
 
 		if (value.endsWith("\"") && value.startsWith("\"")) {
+			if (value.contains("\n")) {
+				throw new PoshiScriptParserException(
+					"Invalid variable assignment syntax, please use triple " +
+						"quotes (''') to wrap a multiline string instead of " +
+							"double quotes",
+					value, (PoshiElement)getParent());
+			}
+
 			value = getDoubleQuotedContent(value);
 
 			if (value.endsWith("}") && value.startsWith("${")) {

@@ -8,12 +8,14 @@ definition {
 	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 	property testray.main.component.name = "Site Initializer Testray";
 
+	var testSiteName = "Testray 2";
+
 	setUp {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
 
-		Testray.addTestraySite();
+		Testray.addTestraySite(siteName = ${testSiteName});
 
 		Refresh();
 	}
@@ -36,7 +38,7 @@ definition {
 	@priority = 5
 	test AdminCanAddTeam {
 		task ("Go to Testray and Create Project") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.createProjectTestray(
 				description = "Projects_1 Project Description",
@@ -54,7 +56,7 @@ definition {
 
 			TestrayManage.createTeam(teamName = "Teams_1 Team");
 
-			Testray.assertItemName(key_name = "Teams_1 Team");
+			Testray.assertItemName(text = "Teams_1 Team");
 		}
 	}
 
@@ -62,7 +64,7 @@ definition {
 	@priority = 4
 	test AdminCanAssignTeamsByDualbox {
 		task ("Go to Testray and Create Project") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.createProjectTestray(
 				description = "Projects_1 Project Description",
@@ -104,7 +106,7 @@ definition {
 
 			TestrayContextMenu.selectItemFromProjectsContextMenu(item = "Manage Components");
 
-			Testray.assertItemName(key_name = "Component_Unassigned");
+			Testray.assertItemName(text = "Component_Unassigned");
 		}
 	}
 
@@ -112,7 +114,7 @@ definition {
 	@priority = 5
 	test AdminCanDeleteTeam {
 		task ("Go to Testray and Create Project") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.createProjectTestray(
 				description = "Projects_1 Project Description",
@@ -136,7 +138,7 @@ definition {
 				itemManage = "Delete",
 				versionName = "Teams_2 Team");
 
-			Testray.assertItemNotPresent(key_name = "Teams_2 Team");
+			Testray.assertItemNotPresent(text = "Teams_2 Team");
 		}
 	}
 
@@ -144,7 +146,7 @@ definition {
 	@priority = 5
 	test AdminCanEditTeam {
 		task ("Go to Testray and Create Project") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.createProjectTestray(
 				description = "Projects_1 Project Description",
@@ -168,7 +170,7 @@ definition {
 				nameTeam = "Teams_3 Team",
 				typeTeam = "Teams_3 Team Edited");
 
-			Testray.assertItemName(key_name = "Teams_3 Team Edited");
+			Testray.assertItemName(text = "Teams_3 Team Edited");
 		}
 	}
 
@@ -176,7 +178,7 @@ definition {
 	@priority = 5
 	test AdminCanNotAddDuplicateTeams {
 		task ("Go to Testray and Create Project") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.createProjectTestray(
 				description = "Projects_1 Project Description",
@@ -204,7 +206,7 @@ definition {
 	@priority = 4
 	test AdminCanViewWarningMessage {
 		task ("Go to Testray and Create Project") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.createProjectTestray(
 				description = "Projects_1 Project Description",

@@ -194,8 +194,8 @@ definition {
 			locator1 = "Checkbox#LEXICON_SELECT_ALL_INPUT_SPECIFIC");
 	}
 
-	macro submitForPublication {
-		Button.clickSubmitForPublication();
+	macro submitForWorkflow {
+		Button.clickSubmitForWorkflow();
 
 		Alert.viewSuccessMessage();
 	}
@@ -209,7 +209,7 @@ definition {
 	macro viewEmptyMessage {
 		var entity = StringUtil.toLowerCase(${entity});
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "There are no ${entity}.");
 	}

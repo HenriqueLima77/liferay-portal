@@ -81,7 +81,6 @@ renderResponse.setTitle(editClientExtensionEntryDisplayContext.getTitle());
 			>
 				<aui:field-wrapper label="name" name="name" required="<%= true %>">
 					<liferay-ui:input-localized
-						autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>"
 						name="name"
 						xml="<%= editClientExtensionEntryDisplayContext.getName() %>"
 					/>
@@ -138,7 +137,7 @@ renderResponse.setTitle(editClientExtensionEntryDisplayContext.getTitle());
 	<liferay-frontend:edit-form-footer>
 		<liferay-frontend:edit-form-buttons
 			redirect="<%= editClientExtensionEntryDisplayContext.getRedirect() %>"
-			submitLabel='<%= WorkflowDefinitionLinkLocalServiceUtil.hasWorkflowDefinitionLink(themeDisplay.getCompanyId(), 0L, ClientExtensionEntry.class.getName()) ? "submit-for-publication" : "publish" %>'
+			submitLabel='<%= WorkflowDefinitionLinkLocalServiceUtil.hasWorkflowDefinitionLink(themeDisplay.getCompanyId(), 0L, ClientExtensionEntry.class.getName()) ? "submit-for-workflow" : "publish" %>'
 		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>

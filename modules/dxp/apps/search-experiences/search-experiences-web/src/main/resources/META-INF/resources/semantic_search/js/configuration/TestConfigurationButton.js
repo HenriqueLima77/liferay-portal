@@ -27,6 +27,7 @@ function TestConfigurationButton({
 	availableTextEmbeddingProviders,
 	basicAuthPassword,
 	basicAuthUsername,
+	disabled,
 	embeddingVectorDimensions,
 	errors,
 	hostAddress,
@@ -76,6 +77,16 @@ function TestConfigurationButton({
 				accessToken,
 				model,
 				modelTimeout,
+			};
+		}
+
+		if (
+			textEmbeddingProvider ===
+			TEXT_EMBEDDING_PROVIDER_TYPES.HUGGING_FACE_INFERENCE_ENDPOINT
+		) {
+			return {
+				accessToken,
+				hostAddress,
 			};
 		}
 
@@ -259,6 +270,16 @@ function TestConfigurationButton({
 			);
 		}
 
+		if (
+			textEmbeddingProvider ===
+			TEXT_EMBEDDING_PROVIDER_TYPES.HUGGING_FACE_INFERENCE_ENDPOINT
+		) {
+			return (
+				errors?.attributes?.accessToken ||
+				errors?.attributes?.hostAddress
+			);
+		}
+
 		if (textEmbeddingProvider === TEXT_EMBEDDING_PROVIDER_TYPES.TXTAI) {
 			return errors?.attributes?.hostAddress;
 		}
@@ -270,10 +291,14 @@ function TestConfigurationButton({
 		<div className="test-configuration-button-root">
 			<ClayTooltipProvider>
 				<ClayButton
-					aria-disabled={loading || isMissingRequiredFields()}
+					aria-disabled={
+						loading || isMissingRequiredFields() || disabled
+					}
 					aria-label={Liferay.Language.get('test-configuration')}
 					className={
-						loading || isMissingRequiredFields() ? 'disabled' : ''
+						loading || isMissingRequiredFields() || disabled
+							? 'disabled'
+							: ''
 					}
 					displayType="secondary"
 					onClick={_handleTestConfigurationButtonClick}

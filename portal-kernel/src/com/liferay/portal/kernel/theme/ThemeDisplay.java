@@ -593,6 +593,15 @@ public class ThemeDisplay
 	}
 
 	/**
+	 * Returns the URL for the control panel's spritemap.
+	 *
+	 * @return the URL for the control panel's spritemap
+	 */
+	public String getPathControlPanelSpritemap() {
+		return _pathControlPanelSpritemap;
+	}
+
+	/**
 	 * Returns the URL for the site's private layout set. This method typically
 	 * returns <code>/group</code>.
 	 *
@@ -1202,6 +1211,10 @@ public class ThemeDisplay
 		return _secure;
 	}
 
+	public boolean isShowControlMenu() {
+		return _showControlMenu;
+	}
+
 	public boolean isShowControlPanelIcon() {
 		return _showControlPanelIcon;
 	}
@@ -1478,6 +1491,12 @@ public class ThemeDisplay
 			cdnBaseURL + themeStaticResourcePath +
 				colorScheme.getColorSchemeImagesPath());
 
+		String claySpritemapPath = StringBundler.concat(
+			cdnBaseURL, themeStaticResourcePath, theme.getImagesPath(),
+			"/clay/icons.svg");
+
+		setPathControlPanelSpritemap(claySpritemapPath);
+
 		String dynamicResourcesHost = getCDNDynamicResourcesHost();
 
 		if (Validator.isNull(dynamicResourcesHost)) {
@@ -1511,11 +1530,7 @@ public class ThemeDisplay
 			setPathThemeRoot(themeStaticResourcePath + rootPath);
 		}
 
-		setPathThemeSpritemap(
-			StringBundler.concat(
-				cdnBaseURL, themeStaticResourcePath, theme.getImagesPath(),
-				"/clay/icons.svg"));
-
+		setPathThemeSpritemap(claySpritemapPath);
 		setPathThemeTemplates(
 			cdnBaseURL + themeStaticResourcePath + theme.getTemplatesPath());
 	}
@@ -1546,6 +1561,10 @@ public class ThemeDisplay
 
 	public void setPathContext(String pathContext) {
 		_pathContext = pathContext;
+	}
+
+	public void setPathControlPanelSpritemap(String pathControlPanelSpritemap) {
+		_pathControlPanelSpritemap = pathControlPanelSpritemap;
 	}
 
 	public void setPathFriendlyURLPrivateGroup(
@@ -1705,6 +1724,10 @@ public class ThemeDisplay
 
 	public void setSessionId(String sessionId) {
 		_sessionId = sessionId;
+	}
+
+	public void setShowControlMenu(boolean showControlMenu) {
+		_showControlMenu = showControlMenu;
 	}
 
 	public void setShowControlPanelIcon(boolean showControlPanelIcon) {
@@ -2001,6 +2024,7 @@ public class ThemeDisplay
 	private String _pathCms = StringPool.BLANK;
 	private String _pathColorSchemeImages = StringPool.BLANK;
 	private String _pathContext = StringPool.BLANK;
+	private String _pathControlPanelSpritemap = StringPool.BLANK;
 	private String _pathFriendlyURLPrivateGroup = StringPool.BLANK;
 	private String _pathFriendlyURLPrivateUser = StringPool.BLANK;
 	private String _pathFriendlyURLPublic = StringPool.BLANK;
@@ -2037,6 +2061,7 @@ public class ThemeDisplay
 	private String _serverName;
 	private int _serverPort;
 	private String _sessionId = StringPool.BLANK;
+	private boolean _showControlMenu;
 	private boolean _showControlPanelIcon;
 	private boolean _showHomeIcon;
 	private boolean _showLayoutTemplatesIcon;

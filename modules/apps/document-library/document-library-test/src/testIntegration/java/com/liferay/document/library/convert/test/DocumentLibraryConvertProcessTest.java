@@ -91,12 +91,18 @@ public class DocumentLibraryConvertProcessTest {
 			new String[] {_CLASS_NAME_DB_STORE, Boolean.TRUE.toString()});
 
 		_defaultStore = ReflectionTestUtil.getAndSetFieldValue(
+			_convertProcess, "_store", _fileSystemStore);
+
+		ReflectionTestUtil.setFieldValue(
 			DLStoreImpl.class, "_store", _fileSystemStore);
+
 		_group = GroupTestUtil.addGroup();
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		ReflectionTestUtil.setFieldValue(_convertProcess, "_store", _dbStore);
+
 		ReflectionTestUtil.setFieldValue(DLStoreImpl.class, "_store", _dbStore);
 
 		_convertProcess.setParameterValues(
@@ -109,6 +115,9 @@ public class DocumentLibraryConvertProcessTest {
 		}
 		finally {
 			PropsValues.DL_STORE_IMPL = PropsUtil.get(PropsKeys.DL_STORE_IMPL);
+
+			ReflectionTestUtil.setFieldValue(
+				_convertProcess, "_store", _defaultStore);
 
 			ReflectionTestUtil.setFieldValue(
 				DLStoreImpl.class, "_store", _defaultStore);
@@ -151,7 +160,8 @@ public class DocumentLibraryConvertProcessTest {
 	@Test
 	public void testMigrateDLWhenFileEntryInFolder() throws Exception {
 		Folder folder = _dlAppService.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), TestPropsValues.getUserId()));
@@ -285,7 +295,8 @@ public class DocumentLibraryConvertProcessTest {
 			TestDataConstants.TEST_BYTE_ARRAY);
 
 		Folder folder = _dlAppService.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), TestPropsValues.getUserId()));

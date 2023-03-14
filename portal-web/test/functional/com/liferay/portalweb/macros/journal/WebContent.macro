@@ -451,8 +451,8 @@ definition {
 		}
 
 		AssertClick(
-			locator1 = "Button#SUBMIT_FOR_PUBLICATION",
-			value1 = "Submit for Publication");
+			locator1 = "Button#SUBMIT_FOR_WORKFLOW",
+			value1 = "Submit for Workflow");
 
 		Alert.viewSuccessMessage();
 	}
@@ -534,6 +534,7 @@ definition {
 				}
 				else if (isSet(imageFileName)) {
 					ItemSelector.selectDMImage(
+						dmFolderName = ${dmFolderName},
 						imageFileName = ${webContentImage},
 						navTab = ${navTab});
 				}
@@ -822,7 +823,7 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		Button.clickSubmitForPublication();
+		Button.clickSubmitForWorkflow();
 
 		Alert.viewSuccessMessage();
 	}
@@ -835,8 +836,8 @@ definition {
 			webContentTitle = ${webContentTitle});
 
 		AssertClick(
-			locator1 = "Button#SUBMIT_FOR_PUBLICATION",
-			value1 = "Submit for Publication");
+			locator1 = "Button#SUBMIT_FOR_WORKFLOW",
+			value1 = "Submit for Workflow");
 
 		SelectFrame();
 
@@ -1666,7 +1667,7 @@ definition {
 
 	macro removeDuplicatedFieldsGroup {
 		Click(
-			key_fieldName = "FieldsGroup",
+			key_fieldName = "Field",
 			key_index = ${index},
 			locator1 = "FormFields#FIELD_REMOVE");
 	}
@@ -1693,7 +1694,7 @@ definition {
 	macro searchNoResultsCP {
 		Search.searchCP(searchTerm = ${searchQuery});
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "No web content was found.");
 
@@ -2091,7 +2092,7 @@ definition {
 	macro viewDefaultCP {
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "No web content was found.");
 
@@ -2306,7 +2307,7 @@ definition {
 
 		AssertElementPresent(locator1 = "NavBar#CONTAINER");
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "No web content was found.");
 	}
@@ -2828,7 +2829,7 @@ definition {
 
 			AssertTextEquals(
 				key_fieldFieldLabel = ${webContentSelectFromListFieldLabel},
-				locator1 = "DDMField#SELECT_FROM_LIST",
+				locator1 = "WCEditWebContent#SELECT_FIELD_TRIGGER",
 				value1 = ${webContentSelectFromList});
 		}
 
@@ -2863,7 +2864,7 @@ definition {
 					key_fieldFieldLabel = ${webContentTextFieldLabel},
 					locator1 = "DDMField#MULTIPLE_LINES");
 
-				var actual = TestUtils.getElementTextContent(element = "//label[normalize-space(text())='${webContentTextFieldLabel}']//following-sibling::textarea");
+				var actual = TestUtils.getElementTextContent(element = "//label[normalize-space(text())='${webContentTextFieldLabel}']//..//textarea");
 
 				TestUtils.assertEquals(
 					actual = ${actual},

@@ -14,6 +14,7 @@
 
 package com.liferay.analytics.dxp.entity.rest.internal.dto.v1_0.converter;
 
+import com.liferay.account.model.AccountEntry;
 import com.liferay.analytics.dxp.entity.rest.dto.v1_0.DXPEntity;
 import com.liferay.analytics.dxp.entity.rest.dto.v1_0.ExpandoField;
 import com.liferay.analytics.dxp.entity.rest.dto.v1_0.Field;
@@ -28,6 +29,8 @@ import com.liferay.expando.kernel.model.ExpandoTableConstants;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -300,6 +303,19 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 		List<String> includeAttributeNames = new ArrayList<>();
 
 		if (StringUtil.equals(
+				baseModel.getModelClassName(), AccountEntry.class.getName())) {
+
+			AccountEntry accountEntry = (AccountEntry)baseModel;
+
+			AnalyticsConfiguration analyticsConfiguration =
+				_analyticsConfigurationRegistry.getAnalyticsConfiguration(
+					accountEntry.getCompanyId());
+
+			includeAttributeNames = ListUtil.fromArray(
+				analyticsConfiguration.syncedAccountFieldNames());
+		}
+
+		if (StringUtil.equals(
 				baseModel.getModelClassName(), User.class.getName())) {
 
 			User user = (User)baseModel;
@@ -322,20 +338,6 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 		_addFieldAttributes(baseModel, fields, includeAttributeNames);
 
 		if (StringUtil.equals(
-				baseModel.getModelClassName(), Organization.class.getName())) {
-
-			Field field = new Field();
-
-			field.setName("parentOrganizationName");
-
-			Organization organization = (Organization)baseModel;
-
-			field.setValue(organization.getParentOrganizationName());
-
-			fields.add(field);
-		}
-
-		if (StringUtil.equals(
 				baseModel.getModelClassName(), Group.class.getName())) {
 
 			for (Field field : fields) {
@@ -347,6 +349,20 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 					break;
 				}
 			}
+		}
+
+		if (StringUtil.equals(
+				baseModel.getModelClassName(), Organization.class.getName())) {
+
+			Field field = new Field();
+
+			field.setName("parentOrganizationName");
+
+			Organization organization = (Organization)baseModel;
+
+			field.setValue(organization.getParentOrganizationName());
+
+			fields.add(field);
 		}
 
 		return fields.toArray(new Field[0]);
@@ -384,13 +400,13 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 				return String.valueOf(value);
 			}
 
-			List<Object> objects = new ArrayList<>();
+			JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 			for (int i = 0; i < Array.getLength(value); i++) {
-				objects.add(Array.get(value, i));
+				jsonArray.put(Array.get(value, i));
 			}
 
-			return "[" + StringUtil.merge(objects.toArray(), ",") + "]";
+			return jsonArray.toString();
 		}
 
 		return null;
@@ -434,5 +450,8 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 
 	@Reference
 	private ExpandoTableLocalService _expandoTableLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

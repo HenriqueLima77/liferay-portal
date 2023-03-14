@@ -56,6 +56,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -424,7 +425,7 @@ public abstract class BaseCartResourceTestCase {
 			testGetChannelCartsPage_getIrrelevantChannelId();
 
 		Page<Cart> page = cartResource.getChannelCartsPage(
-			accountId, channelId, Pagination.of(1, 10));
+			accountId, channelId, null, Pagination.of(1, 10));
 
 		Assert.assertEquals(0, page.getTotalCount());
 
@@ -434,13 +435,17 @@ public abstract class BaseCartResourceTestCase {
 				randomIrrelevantCart());
 
 			page = cartResource.getChannelCartsPage(
-				irrelevantAccountId, irrelevantChannelId, Pagination.of(1, 2));
+				irrelevantAccountId, irrelevantChannelId, null,
+				Pagination.of(1, 2));
 
 			Assert.assertEquals(1, page.getTotalCount());
 
 			assertEquals(
 				Arrays.asList(irrelevantCart), (List<Cart>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetChannelCartsPage_getExpectedActions(
+					irrelevantAccountId, irrelevantChannelId));
 		}
 
 		Cart cart1 = testGetChannelCartsPage_addCart(
@@ -450,17 +455,29 @@ public abstract class BaseCartResourceTestCase {
 			accountId, channelId, randomCart());
 
 		page = cartResource.getChannelCartsPage(
-			accountId, channelId, Pagination.of(1, 10));
+			accountId, channelId, null, Pagination.of(1, 10));
 
 		Assert.assertEquals(2, page.getTotalCount());
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(cart1, cart2), (List<Cart>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetChannelCartsPage_getExpectedActions(accountId, channelId));
 
 		cartResource.deleteCart(cart1.getId());
 
 		cartResource.deleteCart(cart2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetChannelCartsPage_getExpectedActions(
+				Long accountId, Long channelId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -478,14 +495,14 @@ public abstract class BaseCartResourceTestCase {
 			accountId, channelId, randomCart());
 
 		Page<Cart> page1 = cartResource.getChannelCartsPage(
-			accountId, channelId, Pagination.of(1, 2));
+			accountId, channelId, null, Pagination.of(1, 2));
 
 		List<Cart> carts1 = (List<Cart>)page1.getItems();
 
 		Assert.assertEquals(carts1.toString(), 2, carts1.size());
 
 		Page<Cart> page2 = cartResource.getChannelCartsPage(
-			accountId, channelId, Pagination.of(2, 2));
+			accountId, channelId, null, Pagination.of(2, 2));
 
 		Assert.assertEquals(3, page2.getTotalCount());
 
@@ -494,7 +511,7 @@ public abstract class BaseCartResourceTestCase {
 		Assert.assertEquals(carts2.toString(), 1, carts2.size());
 
 		Page<Cart> page3 = cartResource.getChannelCartsPage(
-			accountId, channelId, Pagination.of(1, 3));
+			accountId, channelId, null, Pagination.of(1, 3));
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(cart1, cart2, cart3), (List<Cart>)page3.getItems());
@@ -924,6 +941,12 @@ public abstract class BaseCartResourceTestCase {
 	}
 
 	protected void assertValid(Page<Cart> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Cart> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Cart> carts = page.getItems();
@@ -938,6 +961,20 @@ public abstract class BaseCartResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1445,6 +1482,10 @@ public abstract class BaseCartResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

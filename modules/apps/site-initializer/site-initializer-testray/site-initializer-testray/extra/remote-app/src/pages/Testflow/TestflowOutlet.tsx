@@ -14,7 +14,9 @@
 
 import {useEffect} from 'react';
 import {Outlet, useLocation, useParams} from 'react-router-dom';
+import LoadingTaskPage from '~/components/LoadingTaskPage';
 
+import SearchBuilder from '../../core/SearchBuilder';
 import {useFetch} from '../../hooks/useFetch';
 import useHeader from '../../hooks/useHeader';
 import useSearchBuilder from '../../hooks/useSearchBuilder';
@@ -30,8 +32,7 @@ import {
 	testrayTaskUsersImpl,
 } from '../../services/rest';
 import {testrayTaskCaseTypesImpl} from '../../services/rest/TestrayTaskCaseTypes';
-import {SearchBuilder} from '../../util/search';
-import {SubTaskStatuses} from '../../util/statuses';
+import {SubTaskStatuses, TaskStatuses} from '../../util/statuses';
 
 const TestflowNavigationOutlet = () => {
 	const {pathname} = useLocation();
@@ -93,19 +94,13 @@ const TestflowOutlet = () => {
 
 	const {data: testrayTaskUser, revalidate: revalidateTaskUser} = useFetch<
 		APIResponse<TestrayTaskUser>
-	>(
-		`${testrayTaskImpl.getNestedObject(
-			'taskToTasksUsers',
-			Number(taskId)
-		)}`,
-		{
-			params: {
-				nestedFields: 'task,user',
-			},
-			transformData: (response) =>
-				testrayTaskUsersImpl.transformDataFromList(response),
-		}
-	);
+	>(`${testrayTaskImpl.getNestedObject('taskToTasksUsers', taskId)}`, {
+		params: {
+			nestedFields: 'task,user',
+		},
+		transformData: (response) =>
+			testrayTaskUsersImpl.transformDataFromList(response),
+	});
 
 	const searchBuilder = useSearchBuilder({useURIEncode: false});
 
@@ -131,6 +126,19 @@ const TestflowOutlet = () => {
 
 	if (!testrayTask) {
 		return null;
+	}
+
+	if (
+		[TaskStatuses.PROCESSING, TaskStatuses.OPEN].includes(
+			testrayTask.dueStatus.key as TaskStatuses
+		)
+	) {
+		return (
+			<LoadingTaskPage
+				mutateTask={mutateTask}
+				testrayTask={testrayTask}
+			/>
+		);
 	}
 
 	return (

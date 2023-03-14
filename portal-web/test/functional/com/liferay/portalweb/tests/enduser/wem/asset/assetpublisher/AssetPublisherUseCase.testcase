@@ -1230,9 +1230,9 @@ definition {
 			SelectFrameTop();
 
 			AssertTextEquals.assertPartialText(
-				key_text = "Select from List: Value1",
+				key_text = "Select from List: Option 1",
 				locator1 = "APConfiguration#SOURCE_SCOPE_FIELD_FILTER_AND_VALUE",
-				value1 = "Select from List: Value1");
+				value1 = "Select from List: Option 1");
 
 			PortletEntry.save();
 		}
@@ -2246,7 +2246,7 @@ import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 try {
 	def bundleContext = SystemBundleUtil.getBundleContext();
 
-	def serviceReference = bundleContext.getServiceReference("com.liferay.asset.publisher.web.internal.messaging.helper.AssetEntriesCheckerHelper");
+	def serviceReference = bundleContext.getServiceReference("com.liferay.asset.publisher.web.internal.scheduler.helper.AssetEntriesCheckerHelper");
 
 	def assetEntriesCheckerHelper = bundleContext.getService(serviceReference);
 

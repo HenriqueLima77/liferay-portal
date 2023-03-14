@@ -24,6 +24,7 @@ import {AttachmentProperties} from './AttachmentProperties';
 import {FormulaContainer} from './FormulaContainer';
 import {MaxLengthProperties} from './MaxLengthProperties';
 import {SearchableContainer} from './SearchableContainer';
+import {TranslationOptionsContainer} from './TranslationOptionsContainer';
 
 interface AggregationFilters {
 	defaultSort?: boolean;
@@ -79,7 +80,9 @@ export function BasicInfo({
 		AggregationFilters[]
 	>([]);
 
-	const [creationLanguageId2, setCreationLanguageId2] = useState<Locale>();
+	const [creationLanguageId2, setCreationLanguageId2] = useState<
+		Liferay.Language.Locale
+	>();
 
 	const disableFieldFormBase = !!(
 		isApproved ||
@@ -109,7 +112,9 @@ export function BasicInfo({
 				/>
 
 				<ObjectFieldFormBase
-					creationLanguageId2={creationLanguageId2 as Locale}
+					creationLanguageId2={
+						creationLanguageId2 as Liferay.Language.Locale
+					}
 					disabled={disableFieldFormBase}
 					editingField
 					errors={errors}
@@ -186,6 +191,14 @@ export function BasicInfo({
 					objectField={values}
 					readOnly={readOnly}
 					setValues={setValues}
+				/>
+			)}
+
+			{Liferay.FeatureFlags['LPS-146755'] && (
+				<TranslationOptionsContainer
+					published={isApproved}
+					setValues={setValues}
+					values={values}
 				/>
 			)}
 

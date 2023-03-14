@@ -14,7 +14,7 @@
 
 import {format, isValid, parseISO} from 'date-fns';
 
-import {CONJUNCTIONS} from './constants.es';
+import {CONJUNCTIONS} from './constants';
 
 const GROUP_ID_NAMESPACE = 'group_';
 
@@ -90,6 +90,26 @@ export function getChildGroupIds(criteria) {
 export function getSupportedOperatorsFromType(operators, propertyTypes, type) {
 	return operators.filter((operator) => {
 		const validOperators = propertyTypes[type];
+
+		return validOperators && validOperators.includes(operator.name);
+	});
+}
+
+/**
+ * Gets the list of operators for an event subtype.
+ * Used for displaying the operators available for each criteria row.
+ * @param {Array} operators The full list of event supported operators.
+ * @param {Object} propertyTypes A map of property types and the operators
+ * supported for each type.
+ * @param {string} subtype The subtype inside event type (NOT, INTEGER, ...)to get the supported operators for.
+ */
+export function getSupportedOperatorsFromEvent(
+	operators,
+	propertyTypes,
+	subtype
+) {
+	return operators.filter((operator) => {
+		const validOperators = propertyTypes.event[subtype];
 
 		return validOperators && validOperators.includes(operator.name);
 	});

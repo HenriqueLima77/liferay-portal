@@ -32,7 +32,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 
 import java.io.IOException;
 
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,38 +84,44 @@ public class AMServlet extends HttpServlet {
 				throw new AMException.AMNotFound();
 			}
 
+			boolean download = ParamUtil.getBoolean(
+				httpServletRequest, "download");
+
 			long fileEntryId = _getFileEntryId(
 				String.valueOf(adaptiveMedia.getURI()));
 
 			if (fileEntryId > 0) {
+				String cacheControlValue =
+					HttpHeaders.CACHE_CONTROL_PRIVATE_VALUE;
+
+				if (download) {
+					cacheControlValue =
+						HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE;
+				}
+
 				httpServletResponse.addHeader(
 					HttpHeaders.CACHE_CONTROL,
 					FileEntryHttpHeaderCustomizerUtil.getHttpHeaderValue(
 						_dlAppLocalService.getFileEntry(fileEntryId),
-						HttpHeaders.CACHE_CONTROL,
-						HttpHeaders.CACHE_CONTROL_PRIVATE_VALUE));
+						HttpHeaders.CACHE_CONTROL, cacheControlValue));
 			}
 
-			Optional<Long> contentLengthOptional =
-				adaptiveMedia.getValueOptional(
-					AMAttribute.getContentLengthAMAttribute());
+			Long contentLength = adaptiveMedia.getValue(
+				AMAttribute.getContentLengthAMAttribute());
 
-			long contentLength = contentLengthOptional.orElse(0L);
+			if (contentLength == null) {
+				contentLength = 0L;
+			}
 
-			Optional<String> contentTypeOptional =
-				adaptiveMedia.getValueOptional(
-					AMAttribute.getContentTypeAMAttribute());
+			String contentType = adaptiveMedia.getValue(
+				AMAttribute.getContentTypeAMAttribute());
 
-			String contentType = contentTypeOptional.orElse(
-				ContentTypes.APPLICATION_OCTET_STREAM);
+			if (contentType == null) {
+				contentType = ContentTypes.APPLICATION_OCTET_STREAM;
+			}
 
-			Optional<String> fileNameOptional = adaptiveMedia.getValueOptional(
+			String fileName = adaptiveMedia.getValue(
 				AMAttribute.getFileNameAMAttribute());
-
-			String fileName = fileNameOptional.orElse(null);
-
-			boolean download = ParamUtil.getBoolean(
-				httpServletRequest, "download");
 
 			if (download) {
 				ServletResponseUtil.sendFile(

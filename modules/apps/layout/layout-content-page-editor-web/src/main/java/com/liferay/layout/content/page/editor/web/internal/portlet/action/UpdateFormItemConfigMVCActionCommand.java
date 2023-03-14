@@ -26,7 +26,9 @@ import com.liferay.info.field.InfoField;
 import com.liferay.info.field.type.BooleanInfoFieldType;
 import com.liferay.info.field.type.DateInfoFieldType;
 import com.liferay.info.field.type.FileInfoFieldType;
+import com.liferay.info.field.type.HTMLInfoFieldType;
 import com.liferay.info.field.type.InfoFieldType;
+import com.liferay.info.field.type.MultiselectInfoFieldType;
 import com.liferay.info.field.type.NumberInfoFieldType;
 import com.liferay.info.field.type.RelationshipInfoFieldType;
 import com.liferay.info.field.type.SelectInfoFieldType;
@@ -64,7 +66,6 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -286,6 +287,14 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 			return "INPUTS-file-upload";
 		}
 
+		if (infoFieldType instanceof HTMLInfoFieldType) {
+			return "INPUTS-rich-text-input";
+		}
+
+		if (infoFieldType instanceof MultiselectInfoFieldType) {
+			return "INPUTS-multiselect-list";
+		}
+
 		if (infoFieldType instanceof NumberInfoFieldType) {
 			return "INPUTS-numeric-input";
 		}
@@ -298,8 +307,6 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 
 		if (infoFieldType instanceof TextInfoFieldType) {
 			if (GetterUtil.getBoolean(
-					PropsUtil.get("feature.flag.LPS-161631")) &&
-				GetterUtil.getBoolean(
 					infoField.getAttribute(TextInfoFieldType.MULTILINE))) {
 
 				return "INPUTS-textarea";

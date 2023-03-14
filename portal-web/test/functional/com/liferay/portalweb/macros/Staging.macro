@@ -1286,14 +1286,14 @@ definition {
 		}
 	}
 
-	macro submitForPublicationPageRevision {
+	macro submitForWorkflowPageRevision {
 		if (IsTextEqual(locator1 = "Message#WORKFLOW_STATUS", value1 = "Draft")) {
 			AssertClick(
-				locator1 = "Staging#STAGING_MENU_SUBMIT_FOR_PUBLICATION",
-				value1 = "Submit for Publication");
+				locator1 = "Staging#STAGING_MENU_SUBMIT_FOR_WORKFLOW",
+				value1 = "Submit for Workflow");
 		}
 
-		AssertElementNotPresent(locator1 = "Staging#STAGING_MENU_SUBMIT_FOR_PUBLICATION");
+		AssertElementNotPresent(locator1 = "Staging#STAGING_MENU_SUBMIT_FOR_WORKFLOW");
 
 		if (IsTextEqual(locator1 = "Message#WORKFLOW_STATUS", value1 = "Pending (Created)")) {
 			AssertTextEquals(
@@ -1730,12 +1730,13 @@ definition {
 		var key_pageName = ${pageName};
 		var key_title = ${title};
 
+		ScrollWebElementIntoView(locator1 = "StagingPublishToLive#CONTENT_ALL");
+
 		MouseOver(
 			key_pageName = ${pageName},
 			locator1 = "StagingPublishToLive#PAGES_TO_PUBLISH_PAGE_NAME");
 
 		AssertVisible(
-			key_pageName = ${pageName},
 			key_title = ${title},
 			locator1 = "StagingPublishToLive#PAGES_TO_PUBLISH_PAGE_NAME_SPAN_TITLE");
 	}

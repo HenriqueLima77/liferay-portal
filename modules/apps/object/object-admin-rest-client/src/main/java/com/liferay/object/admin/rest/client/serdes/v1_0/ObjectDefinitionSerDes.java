@@ -19,6 +19,7 @@ import com.liferay.object.admin.rest.client.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectField;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectLayout;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectRelationship;
+import com.liferay.object.admin.rest.client.dto.v1_0.ObjectValidationRule;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectView;
 import com.liferay.object.admin.rest.client.json.BaseJSONParser;
 
@@ -226,6 +227,16 @@ public class ObjectDefinitionSerDes {
 			sb.append(_toJSON(objectDefinition.getLabel()));
 		}
 
+		if (objectDefinition.getModifiable() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"modifiable\": ");
+
+			sb.append(objectDefinition.getModifiable());
+		}
+
 		if (objectDefinition.getName() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -327,6 +338,32 @@ public class ObjectDefinitionSerDes {
 
 				if ((i + 1) <
 						objectDefinition.getObjectRelationships().length) {
+
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		if (objectDefinition.getObjectValidationRules() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"objectValidationRules\": ");
+
+			sb.append("[");
+
+			for (int i = 0;
+				 i < objectDefinition.getObjectValidationRules().length; i++) {
+
+				sb.append(
+					String.valueOf(
+						objectDefinition.getObjectValidationRules()[i]));
+
+				if ((i + 1) <
+						objectDefinition.getObjectValidationRules().length) {
 
 					sb.append(", ");
 				}
@@ -626,6 +663,14 @@ public class ObjectDefinitionSerDes {
 			map.put("label", String.valueOf(objectDefinition.getLabel()));
 		}
 
+		if (objectDefinition.getModifiable() == null) {
+			map.put("modifiable", null);
+		}
+		else {
+			map.put(
+				"modifiable", String.valueOf(objectDefinition.getModifiable()));
+		}
+
 		if (objectDefinition.getName() == null) {
 			map.put("name", null);
 		}
@@ -667,6 +712,15 @@ public class ObjectDefinitionSerDes {
 			map.put(
 				"objectRelationships",
 				String.valueOf(objectDefinition.getObjectRelationships()));
+		}
+
+		if (objectDefinition.getObjectValidationRules() == null) {
+			map.put("objectValidationRules", null);
+		}
+		else {
+			map.put(
+				"objectValidationRules",
+				String.valueOf(objectDefinition.getObjectValidationRules()));
 		}
 
 		if (objectDefinition.getObjectViews() == null) {
@@ -878,6 +932,12 @@ public class ObjectDefinitionSerDes {
 							(String)jsonParserFieldValue));
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "modifiable")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setModifiable(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "name")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setName((String)jsonParserFieldValue);
@@ -931,6 +991,21 @@ public class ObjectDefinitionSerDes {
 								(String)object)
 						).toArray(
 							size -> new ObjectRelationship[size]
+						));
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "objectValidationRules")) {
+
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setObjectValidationRules(
+						Stream.of(
+							toStrings((Object[])jsonParserFieldValue)
+						).map(
+							object -> ObjectValidationRuleSerDes.toDTO(
+								(String)object)
+						).toArray(
+							size -> new ObjectValidationRule[size]
 						));
 				}
 			}

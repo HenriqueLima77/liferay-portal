@@ -58,6 +58,7 @@ import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.friendly.url.exception.NoSuchFriendlyURLEntryLocalizationException;
 import com.liferay.friendly.url.model.FriendlyURLEntry;
 import com.liferay.friendly.url.model.FriendlyURLEntryLocalization;
+import com.liferay.friendly.url.model.FriendlyURLEntryLocalizationTable;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalService;
 import com.liferay.journal.configuration.JournalGroupServiceConfiguration;
 import com.liferay.journal.configuration.JournalServiceConfiguration;
@@ -583,6 +584,14 @@ public class JournalArticleLocalServiceImpl
 		article.setArticleId(articleId);
 		article.setVersion(version);
 		article.setUrlTitle(urlTitleMap.get(LocaleUtil.toLanguageId(locale)));
+
+		DDMStructure ddmStructure = _ddmStructureLocalService.getStructure(
+			_portal.getSiteGroupId(groupId),
+			_classNameLocalService.getClassNameId(JournalArticle.class),
+			ddmStructureKey, true);
+
+		article.setDDMStructureId(ddmStructure.getStructureId());
+
 		article.setDDMStructureKey(ddmStructureKey);
 		article.setDDMTemplateKey(ddmTemplateKey);
 		article.setDefaultLanguageId(LocaleUtil.toLanguageId(locale));
@@ -765,6 +774,12 @@ public class JournalArticleLocalServiceImpl
 			displayDateMonth, displayDateDay, displayDateYear, displayDateHour,
 			displayDateMinute, user.getTimeZone(), null);
 
+		if ((displayDateMonth == displayDateDay) &&
+			(displayDateDay == displayDateYear) && (displayDateYear == 0)) {
+
+			displayDate = null;
+		}
+
 		Date expirationDate = null;
 		Date reviewDate = null;
 
@@ -828,6 +843,14 @@ public class JournalArticleLocalServiceImpl
 		article.setClassNameId(classNameId);
 		article.setClassPK(classPK);
 		article.setArticleId(articleId);
+
+		DDMStructure ddmStructure = _ddmStructureLocalService.getStructure(
+			_portal.getSiteGroupId(groupId),
+			_classNameLocalService.getClassNameId(JournalArticle.class),
+			ddmStructureKey, true);
+
+		article.setDDMStructureId(ddmStructure.getStructureId());
+
 		article.setDDMStructureKey(ddmStructureKey);
 		article.setDDMTemplateKey(ddmTemplateKey);
 
@@ -1065,6 +1088,7 @@ public class JournalArticleLocalServiceImpl
 		newArticle.setTreePath(oldArticle.getTreePath());
 		newArticle.setArticleId(newArticleId);
 		newArticle.setVersion(JournalArticleConstants.VERSION_DEFAULT);
+		newArticle.setDDMStructureId(oldArticle.getDDMStructureId());
 		newArticle.setDDMStructureKey(oldArticle.getDDMStructureKey());
 		newArticle.setDDMTemplateKey(oldArticle.getDDMTemplateKey());
 		newArticle.setDefaultLanguageId(oldArticle.getDefaultLanguageId());
@@ -3279,6 +3303,27 @@ public class JournalArticleLocalServiceImpl
 		}
 
 		return articles.get(0);
+	}
+
+	@Override
+	public List<Long> getGroupIdsByUrlTitle(long companyId, String urlTitle) {
+		return journalArticlePersistence.dslQuery(
+			DSLQueryFactoryUtil.selectDistinct(
+				FriendlyURLEntryLocalizationTable.INSTANCE.groupId
+			).from(
+				FriendlyURLEntryLocalizationTable.INSTANCE
+			).where(
+				FriendlyURLEntryLocalizationTable.INSTANCE.companyId.eq(
+					companyId
+				).and(
+					FriendlyURLEntryLocalizationTable.INSTANCE.classNameId.eq(
+						_portal.getClassNameId(JournalArticle.class.getName())
+					).and(
+						FriendlyURLEntryLocalizationTable.INSTANCE.urlTitle.eq(
+							urlTitle)
+					)
+				)
+			));
 	}
 
 	@Override
@@ -5808,6 +5853,7 @@ public class JournalArticleLocalServiceImpl
 		article.setFolderId(folderId);
 		article.setTreePath(article.buildTreePath());
 		article.setUrlTitle(urlTitle);
+		article.setDDMStructureId(latestArticle.getDDMStructureId());
 		article.setDDMStructureKey(ddmStructureKey);
 		article.setDDMTemplateKey(ddmTemplateKey);
 		article.setDefaultLanguageId(LocaleUtil.toLanguageId(locale));
@@ -6308,6 +6354,13 @@ public class JournalArticleLocalServiceImpl
 
 		JournalArticle article = getArticle(groupId, articleId);
 
+		if ((article.getClassNameId() > 0) &&
+			(displayDateMonth == displayDateDay) &&
+			(displayDateDay == displayDateYear) && (displayDateYear == 0)) {
+
+			displayDate = null;
+		}
+
 		serviceContext.validateModifiedDate(
 			article, ArticleVersionException.class);
 
@@ -6323,6 +6376,13 @@ public class JournalArticleLocalServiceImpl
 
 		_updateArticleLocalizedFields(
 			article.getCompanyId(), article.getId(), titleMap, descriptionMap);
+
+		DDMStructure ddmStructure = _ddmStructureLocalService.getStructure(
+			_portal.getSiteGroupId(groupId),
+			_classNameLocalService.getClassNameId(JournalArticle.class),
+			ddmStructureKey, true);
+
+		article.setDDMStructureId(ddmStructure.getStructureId());
 
 		article.setDDMStructureKey(ddmStructureKey);
 		article.setDDMTemplateKey(ddmTemplateKey);
@@ -6466,6 +6526,7 @@ public class JournalArticleLocalServiceImpl
 				getUniqueUrlTitle(
 					id, groupId, articleId, title, oldArticle.getUrlTitle(),
 					serviceContext));
+			article.setDDMStructureId(oldArticle.getDDMStructureId());
 			article.setDDMStructureKey(oldArticle.getDDMStructureKey());
 			article.setDDMTemplateKey(oldArticle.getDDMTemplateKey());
 			article.setDefaultLanguageId(
@@ -6959,14 +7020,14 @@ public class JournalArticleLocalServiceImpl
 			return value;
 		}
 
-		long tempFileEntryId = 0;
+		FileEntry tempFileEntry = null;
 
 		try {
 			boolean tempFile = fileEntry.isRepositoryCapabilityProvided(
 				TemporaryFileEntriesCapability.class);
 
 			if (tempFile) {
-				FileEntry tempFileEntry = fileEntry;
+				tempFileEntry = fileEntry;
 
 				Folder folder = article.addImagesFolder();
 
@@ -6980,8 +7041,6 @@ public class JournalArticleLocalServiceImpl
 					article.getResourcePrimKey(), JournalConstants.SERVICE_NAME,
 					folder.getFolderId(), tempFileEntry.getContentStream(),
 					fileEntryName, tempFileEntry.getMimeType(), false);
-
-				tempFileEntryId = tempFileEntry.getFileEntryId();
 			}
 
 			String previewURL = _dlURLHelper.getPreviewURL(
@@ -6995,13 +7054,21 @@ public class JournalArticleLocalServiceImpl
 				valueJSONObject.getString("width"));
 		}
 		finally {
-			long finalTempFileEntryId = tempFileEntryId;
+			FileEntry finalTempFileEntry = tempFileEntry;
 
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
-					if (finalTempFileEntryId > 0) {
-						TempFileEntryUtil.deleteTempFileEntry(
-							finalTempFileEntryId);
+					if (finalTempFileEntry != null) {
+						FileEntry persistedFileEntry =
+							_portletFileRepository.fetchPortletFileEntry(
+								finalTempFileEntry.getGroupId(),
+								finalTempFileEntry.getFolderId(),
+								finalTempFileEntry.getFileName());
+
+						if (persistedFileEntry != null) {
+							TempFileEntryUtil.deleteTempFileEntry(
+								finalTempFileEntry.getFileEntryId());
+						}
 					}
 
 					return null;

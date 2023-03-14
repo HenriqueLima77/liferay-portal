@@ -59,9 +59,19 @@ definition {
 		}
 
 		task ("Then the guest should see not found") {
-			AssertTextEquals(
-				locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
-				value1 = "Not Found");
+			var projectDir = PropsUtil.get("project.dir");
+
+			var fileContent = FileUtil.read("${projectDir}/portal-impl/src/portal.properties");
+
+			if (contains(${fileContent}, "feature.flag.LPS-162765")) {
+				Alert.viewErrorMessage(errorMessage = "Your request failed to complete.");
+			}
+			else {
+				ContentPages.viewFragmentText(
+					fragmentName = "heading",
+					id = "element-text",
+					text = 404);
+			}
 		}
 	}
 

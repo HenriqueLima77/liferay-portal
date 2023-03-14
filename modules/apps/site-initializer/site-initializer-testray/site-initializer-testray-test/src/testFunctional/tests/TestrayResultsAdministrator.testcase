@@ -8,19 +8,21 @@ definition {
 	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 	property testray.main.component.name = "Site Initializer Testray";
 
+	var testSiteName = "Testray 2";
+
 	setUp {
 		task ("Login and create a Testray Site") {
 			TestCase.setUpPortalInstance();
 
 			User.firstLoginPG();
 
-			Testray.addTestraySite();
+			Testray.addTestraySite(siteName = ${testSiteName});
 
 			Refresh();
 		}
 
 		task ("Go to Testray, Create Project and change pagination") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.createProjectTestray(
 				description = "Projects_1 Description",
@@ -112,7 +114,7 @@ definition {
 		}
 
 		task ("Go to Testray 2 and change the pagination") {
-			ApplicationsMenu.gotoSite(site = "Testray 2");
+			ApplicationsMenu.gotoSite(site = ${testSiteName});
 
 			Testray.changePagination(
 				numberItems = 20,
@@ -446,7 +448,7 @@ definition {
 				numberItems = 20,
 				valuePagination = 150);
 
-			Testray.assertItemName(key_name = "Components_1 Project");
+			Testray.assertItemName(text = "Components_1 Project");
 		}
 	}
 
@@ -468,7 +470,7 @@ definition {
 				numberItems = 20,
 				valuePagination = 150);
 
-			Testray.assertItemName(key_name = "Teams_1 Team");
+			Testray.assertItemName(text = "Teams_1 Team");
 		}
 	}
 

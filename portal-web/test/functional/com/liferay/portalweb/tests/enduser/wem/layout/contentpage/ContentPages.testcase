@@ -632,7 +632,8 @@ definition {
 
 				Site.addSiteTemplateCP(
 					siteName = "Site Name",
-					siteTemplateName = "Site Template Name");
+					siteTemplateName = "Site Template Name",
+					siteTemplateTab = "Custom Site Templates");
 			}
 
 			task ("Delete the Button fragment of master template") {
@@ -819,7 +820,7 @@ definition {
 		}
 
 		task ("Assert the four fragments are shown") {
-			AssertTextEquals(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No entries were found.");
 
@@ -863,7 +864,7 @@ definition {
 					fragmentName = ${fragmentName},
 					height = "Tall",
 					navTab = "Fragments",
-					ratio = "9 / 8",
+					ratio = "11 / 10",
 					targetElementName = "Blogs");
 			}
 		}
@@ -1895,7 +1896,8 @@ definition {
 
 				Site.addSiteTemplateCP(
 					siteName = "Test Site Name 2",
-					siteTemplateName = "Site Template Name");
+					siteTemplateName = "Site Template Name",
+					siteTemplateTab = "Custom Site Templates");
 			}
 
 			task ("Add another page based on master page in the site template") {

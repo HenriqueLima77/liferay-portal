@@ -104,6 +104,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.trash.TrashHelper;
 
 import java.io.Serializable;
@@ -153,7 +154,7 @@ public class JournalDisplayContext {
 		return _journalHelper.getAbsolutePath(_liferayPortletRequest, folderId);
 	}
 
-	public String[] getAddMenuFavItems() throws PortalException {
+	public long[] getAddMenuFavItems() throws PortalException {
 		if (_addMenuFavItems != null) {
 			return _addMenuFavItems;
 		}
@@ -162,7 +163,7 @@ public class JournalDisplayContext {
 			PortletPreferencesFactoryUtil.getPortalPreferences(
 				_httpServletRequest);
 
-		List<String> addMenuFavItemsList = new ArrayList<>();
+		List<Long> addMenuFavItemsList = new ArrayList<>();
 
 		String[] addMenuFavItems = portalPreferences.getValues(
 			JournalPortletKeys.JOURNAL,
@@ -172,19 +173,20 @@ public class JournalDisplayContext {
 
 		for (DDMStructure ddmStructure : getDDMStructures()) {
 			if (ArrayUtil.contains(
-					addMenuFavItems, ddmStructure.getStructureKey())) {
+					addMenuFavItems,
+					String.valueOf(ddmStructure.getStructureId()))) {
 
-				addMenuFavItemsList.add(ddmStructure.getStructureKey());
+				addMenuFavItemsList.add(ddmStructure.getStructureId());
 			}
 		}
 
-		_addMenuFavItems = ArrayUtil.toStringArray(addMenuFavItemsList);
+		_addMenuFavItems = ArrayUtil.toLongArray(addMenuFavItemsList);
 
 		return _addMenuFavItems;
 	}
 
 	public int getAddMenuFavItemsLength() throws PortalException {
-		String[] addMenuFavItems = getAddMenuFavItems();
+		long[] addMenuFavItems = getAddMenuFavItems();
 
 		return addMenuFavItems.length;
 	}
@@ -1198,7 +1200,7 @@ public class JournalDisplayContext {
 		articleAndFolderSearchContainer.setOrderByType(getOrderByType());
 
 		if (isSearch()) {
-			List<Object> results =
+			SearchResponse searchResponse =
 				JournalSearcherUtil.searchJournalArticleAndFolders(
 					searchContext -> _populateSearchContext(
 						articleAndFolderSearchContainer.getStart(),
@@ -1206,7 +1208,9 @@ public class JournalDisplayContext {
 						false));
 
 			articleAndFolderSearchContainer.setResultsAndTotal(
-				() -> results, results.size());
+				() -> JournalSearcherUtil.transformJournalArticleAndFolders(
+					searchResponse.getDocuments71()),
+				searchResponse.getTotalHits());
 
 			articleAndFolderSearchContainer.setRowChecker(_getEntriesChecker());
 
@@ -1426,23 +1430,24 @@ public class JournalDisplayContext {
 				getOrderByCol(), getOrderByType()));
 		articleVersionsSearchContainer.setOrderByType(getOrderByType());
 
-		List<JournalArticle> results =
+		SearchResponse searchResponse =
 			JournalSearcherUtil.searchJournalArticles(
-				true,
 				searchContext -> _populateSearchContext(
 					articleVersionsSearchContainer.getStart(),
 					articleVersionsSearchContainer.getEnd(), searchContext,
 					true));
 
 		articleVersionsSearchContainer.setResultsAndTotal(
-			() -> results, results.size());
+			() -> JournalSearcherUtil.transformJournalArticles(
+				searchResponse.getDocuments71(), true),
+			searchResponse.getTotalHits());
 
 		_articleVersionsSearchContainer = articleVersionsSearchContainer;
 
 		return _articleVersionsSearchContainer;
 	}
 
-	private SearchContext _populateSearchContext(
+	private void _populateSearchContext(
 		int start, int end, SearchContext searchContext, boolean showVersions) {
 
 		searchContext.setAndSearch(false);
@@ -1489,11 +1494,9 @@ public class JournalDisplayContext {
 		}
 
 		searchContext.setStart(start);
-
-		return searchContext;
 	}
 
-	private String[] _addMenuFavItems;
+	private long[] _addMenuFavItems;
 	private JournalArticle _article;
 	private JournalArticleDisplay _articleDisplay;
 	private SearchContainer<?> _articleSearchContainer;

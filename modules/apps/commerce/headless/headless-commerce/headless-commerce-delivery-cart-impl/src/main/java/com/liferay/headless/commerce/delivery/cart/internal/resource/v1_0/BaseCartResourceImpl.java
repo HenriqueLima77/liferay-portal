@@ -548,6 +548,10 @@ public abstract class BaseCartResourceImpl
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "pageSize"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "search"
 			)
 		}
 	)
@@ -567,6 +571,9 @@ public abstract class BaseCartResourceImpl
 			@javax.validation.constraints.NotNull
 			@javax.ws.rs.PathParam("channelId")
 			Long channelId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.ws.rs.QueryParam("search")
+			String search,
 			@javax.ws.rs.core.Context Pagination pagination)
 		throws Exception {
 
@@ -1043,7 +1050,9 @@ public abstract class BaseCartResourceImpl
 						permission = _toPermission(
 							resourceActions, resourcePermission, role);
 
-						permissions.put(role.getName(), permission);
+						if (permission != null) {
+							permissions.put(role.getName(), permission);
+						}
 					}
 					else {
 						Set<String> actionsIdsSet = new HashSet<>();
@@ -1082,6 +1091,10 @@ public abstract class BaseCartResourceImpl
 			if ((actionIds & bitwiseValue) == bitwiseValue) {
 				actionsIdsSet.add(resourceAction.getActionId());
 			}
+		}
+
+		if (actionsIdsSet.isEmpty()) {
+			return null;
 		}
 
 		return new Permission() {

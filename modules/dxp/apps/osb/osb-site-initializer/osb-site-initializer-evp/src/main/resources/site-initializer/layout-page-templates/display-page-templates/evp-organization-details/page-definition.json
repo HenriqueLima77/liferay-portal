@@ -57,8 +57,12 @@
 			},
 			{
 				"definition": {
+					"fragmentStyle": {
+						"marginBottom": "8"
+					},
 					"indexed": true,
 					"layout": {
+						"marginBottom": 10,
 						"opacity": 100,
 						"widthType": "Fluid"
 					}
@@ -212,69 +216,6 @@
 																					}
 																				}
 																			],
-																			"indexed": true
-																		},
-																		"type": "Fragment"
-																	}
-																],
-																"type": "Column"
-															},
-															{
-																"definition": {
-																	"columnViewports": [
-																		{
-																			"columnViewportDefinition": {
-																				"size": 12
-																			},
-																			"id": "landscapeMobile"
-																		},
-																		{
-																			"columnViewportDefinition": {
-																			},
-																			"id": "portraitMobile"
-																		},
-																		{
-																			"columnViewportDefinition": {
-																			},
-																			"id": "tablet"
-																		}
-																	],
-																	"size": 2
-																},
-																"pageElements": [
-																	{
-																		"definition": {
-																			"fragment": {
-																				"key": "organization-status-update-buttons-staff",
-																				"siteKey": "[$GROUP_KEY$]"
-																			},
-																			"fragmentConfig": {
-																				"inverted": false,
-																				"style": "primary",
-																				"type": "solid",
-																				"uppercase": false
-																			},
-																			"fragmentFields": [
-																				{
-																					"id": "link approved",
-																					"value": {
-																						"fragmentLink": {
-																						}
-																					}
-																				},
-																				{
-																					"id": "link reject",
-																					"value": {
-																						"fragmentLink": {
-																						}
-																					}
-																				}
-																			],
-																			"fragmentStyle": {
-																				"paddingBottom": "1",
-																				"paddingRight": "1",
-																				"paddingTop": "1"
-																			},
 																			"indexed": true
 																		},
 																		"type": "Fragment"

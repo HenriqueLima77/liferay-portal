@@ -487,7 +487,7 @@
 	</tr>
 	<tr>
 		<td>VIEW_CLOB_TYPE_TEXT_ENTRY</td>
-		<td>//textarea[contains(@type,'text') and contains(text(),'${key_clobType}')]</td>
+		<td>//textarea[contains(@class,'ddm-field-text') and contains(text(),'${key_clobType}')]</td>
 		<td></td>
 	</tr>
 	<tr>
@@ -572,12 +572,12 @@
 	</tr>
 	<tr>
 		<td>CHOOSE_AN_OBJECT</td>
-		<td>//select[@class="form-control"]</td>
+		<td>//input[@placeholder="Choose an Object"]</td>
 		<td></td>
 	</tr>
 	<tr>
 		<td>CHOOSE_OBJECT_LABEL</td>
-		<td>//*[contains(@label,'Unrelated Objects')]//..//option[contains(.,'${key_objectLabel}')]</td>
+		<td>//button[contains(text(),'${key_objectLabel}')]</td>
 		<td></td>
 	</tr>
 	<tr>

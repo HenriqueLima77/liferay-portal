@@ -36,6 +36,26 @@
 						},
 						"pageElements": [
 							{
+								"definition": {
+								},
+								"pageElements": [
+									{
+										"definition": {
+											"widgetInstance": {
+												"widgetConfig": {
+													"properties": "route=notification-sidebar"
+												},
+												"widgetName": "[$CLIENT_EXTENSION_ENTRY_ID:RAYLIFEAGENTPORTAL$]"
+											}
+										},
+										"type": "Widget"
+									}
+								],
+								"type": "FragmentDropZone"
+							},
+							{
+								"definition": {
+								},
 								"pageElements": [
 									{
 										"definition": {
@@ -724,7 +744,7 @@
 																													},
 																													"fragmentConfig": {
 																														"fakeContentId": "fake content",
-																														"height": "257px"
+																														"height": "341px"
 																													},
 																													"fragmentFields": [
 																													],
@@ -794,7 +814,7 @@
 																													},
 																													"fragmentConfig": {
 																														"fakeContentId": "fake content",
-																														"height": "257px"
+																														"height": "341px"
 																													},
 																													"fragmentFields": [
 																													],
@@ -863,7 +883,7 @@
 																									},
 																									"fragmentConfig": {
 																										"fakeContentId": "fake content",
-																										"height": "257px"
+																										"height": "341px"
 																									},
 																									"fragmentFields": [
 																									],
@@ -1118,7 +1138,7 @@
 																													},
 																													"fragmentConfig": {
 																														"fakeContentId": "fake content",
-																														"height": "257px"
+																														"height": "341px"
 																													},
 																													"fragmentFields": [
 																													],
@@ -1188,7 +1208,7 @@
 																													},
 																													"fragmentConfig": {
 																														"fakeContentId": "fake content",
-																														"height": "257px"
+																														"height": "341px"
 																													},
 																													"fragmentFields": [
 																													],
@@ -1257,7 +1277,7 @@
 																									},
 																									"fragmentConfig": {
 																										"fakeContentId": "fake content",
-																										"height": "257px"
+																										"height": "341px"
 																									},
 																									"fragmentFields": [
 																									],
@@ -1512,7 +1532,7 @@
 																													},
 																													"fragmentConfig": {
 																														"fakeContentId": "fake content",
-																														"height": "257px"
+																														"height": "341px"
 																													},
 																													"fragmentFields": [
 																													],
@@ -1582,7 +1602,7 @@
 																													},
 																													"fragmentConfig": {
 																														"fakeContentId": "fake content",
-																														"height": "257px"
+																														"height": "341px"
 																													},
 																													"fragmentFields": [
 																													],
@@ -1651,7 +1671,7 @@
 																									},
 																									"fragmentConfig": {
 																										"fakeContentId": "fake content",
-																										"height": "257px"
+																										"height": "341px"
 																									},
 																									"fragmentFields": [
 																									],

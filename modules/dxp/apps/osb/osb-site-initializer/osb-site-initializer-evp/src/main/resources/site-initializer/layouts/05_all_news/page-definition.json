@@ -23,7 +23,7 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "news",
+								"key": "evp-news",
 								"siteKey": "[$GROUP_ID$]"
 							},
 							"fragmentConfig": {
@@ -168,7 +168,7 @@
 																},
 																{
 																	"fieldName": "siteKey",
-																	"fieldValue": "EVP"
+																	"fieldValue": "[$GROUP_KEY$]"
 																}
 															]
 														}

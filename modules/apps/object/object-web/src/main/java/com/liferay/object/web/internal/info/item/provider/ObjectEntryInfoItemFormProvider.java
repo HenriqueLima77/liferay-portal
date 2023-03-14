@@ -17,11 +17,14 @@ package com.liferay.object.web.internal.info.item.provider;
 import com.liferay.info.exception.NoSuchFormVariationException;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldSet;
+import com.liferay.info.field.InfoFieldSetEntry;
 import com.liferay.info.field.type.FileInfoFieldType;
+import com.liferay.info.field.type.MultiselectInfoFieldType;
 import com.liferay.info.field.type.NumberInfoFieldType;
 import com.liferay.info.field.type.RelationshipInfoFieldType;
 import com.liferay.info.field.type.SelectInfoFieldType;
 import com.liferay.info.field.type.TextInfoFieldType;
+import com.liferay.info.field.type.URLInfoFieldType;
 import com.liferay.info.form.InfoForm;
 import com.liferay.info.item.field.reader.InfoItemFieldReaderFieldSetProvider;
 import com.liferay.info.item.provider.InfoItemFormProvider;
@@ -31,6 +34,7 @@ import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldValidationConstants;
+import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.NoSuchObjectDefinitionException;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -48,9 +52,11 @@ import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.web.internal.configuration.util.ObjectConfigurationUtil;
 import com.liferay.object.web.internal.info.item.ObjectEntryInfoItemFields;
 import com.liferay.object.web.internal.util.ObjectFieldDBTypeUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -65,6 +71,7 @@ import com.liferay.template.info.item.provider.TemplateInfoItemFieldSetProvider;
 import java.math.BigDecimal;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -215,10 +222,24 @@ public class ObjectEntryInfoItemFormProvider
 		}
 		else if (Objects.equals(
 					objectField.getBusinessType(),
-					ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST) ||
-				 Objects.equals(
-					 objectField.getBusinessType(),
-					 ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
+					ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
+
+			finalStep.attribute(
+				MultiselectInfoFieldType.OPTIONS,
+				TransformUtil.transform(
+					_listTypeEntryLocalService.getListTypeEntries(
+						objectField.getListTypeDefinitionId()),
+					listTypeEntry -> new MultiselectInfoFieldType.Option(
+						Objects.equals(
+							objectField.getDefaultValue(),
+							listTypeEntry.getKey()),
+						new FunctionInfoLocalizedValue<>(
+							listTypeEntry::getName),
+						listTypeEntry.getKey())));
+		}
+		else if (Objects.equals(
+					objectField.getBusinessType(),
+					ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
 
 			finalStep.attribute(
 				SelectInfoFieldType.MULTIPLE,
@@ -282,6 +303,90 @@ public class ObjectEntryInfoItemFormProvider
 		}
 
 		return acceptedFileExtensionsObjectFieldSetting.getValue();
+	}
+
+	private List<InfoFieldSetEntry>
+		_getAttachmentObjectDefinitionInfoFieldSetEntries(
+			long objectDefinitionId) {
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-176083")) {
+			return Collections.emptyList();
+		}
+
+		List<InfoFieldSetEntry> infoFieldSetEntries = new ArrayList<>();
+
+		for (ObjectField objectField :
+				_objectFieldLocalService.getObjectFields(
+					objectDefinitionId, false)) {
+
+			if (!Objects.equals(
+					objectField.getBusinessType(),
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+
+				continue;
+			}
+
+			infoFieldSetEntries.add(
+				InfoFieldSet.builder(
+				).infoFieldSetEntry(
+					InfoField.builder(
+					).infoFieldType(
+						URLInfoFieldType.INSTANCE
+					).namespace(
+						ObjectField.class.getSimpleName()
+					).name(
+						objectField.getObjectFieldId() + "#downloadURL"
+					).labelInfoLocalizedValue(
+						InfoLocalizedValue.localize(
+							ObjectEntryInfoItemFields.class, "download-url")
+					).build()
+				).infoFieldSetEntry(
+					InfoField.builder(
+					).infoFieldType(
+						TextInfoFieldType.INSTANCE
+					).namespace(
+						ObjectField.class.getSimpleName()
+					).name(
+						objectField.getObjectFieldId() + "#fileName"
+					).labelInfoLocalizedValue(
+						InfoLocalizedValue.localize(
+							ObjectEntryInfoItemFields.class, "file-name")
+					).build()
+				).infoFieldSetEntry(
+					InfoField.builder(
+					).infoFieldType(
+						TextInfoFieldType.INSTANCE
+					).namespace(
+						ObjectField.class.getSimpleName()
+					).name(
+						objectField.getObjectFieldId() + "#mimeType"
+					).labelInfoLocalizedValue(
+						InfoLocalizedValue.localize(
+							ObjectEntryInfoItemFields.class, "mime-type")
+					).build()
+				).infoFieldSetEntry(
+					InfoField.builder(
+					).infoFieldType(
+						TextInfoFieldType.INSTANCE
+					).namespace(
+						ObjectField.class.getSimpleName()
+					).name(
+						objectField.getObjectFieldId() + "#size"
+					).labelInfoLocalizedValue(
+						InfoLocalizedValue.localize(
+							ObjectEntryInfoItemFields.class, "size")
+					).build()
+				).labelInfoLocalizedValue(
+					InfoLocalizedValue.<String>builder(
+					).values(
+						objectField.getLabelMap()
+					).build()
+				).name(
+					objectField.getName()
+				).build());
+		}
+
+		return infoFieldSetEntries;
 	}
 
 	private InfoFieldSet _getBasicInformationInfoFieldSet() {
@@ -377,10 +482,27 @@ public class ObjectEntryInfoItemFormProvider
 		).<NoSuchFormVariationException>infoFieldSetEntry(
 			unsafeConsumer -> {
 				if (objectDefinitionId != 0) {
+					ObjectDefinition objectDefinition =
+						_objectDefinitionLocalService.fetchObjectDefinition(
+							objectDefinitionId);
+
+					if (objectDefinition == null) {
+						throw new NoSuchFormVariationException(
+							String.valueOf(objectDefinitionId),
+							new NoSuchObjectDefinitionException());
+					}
+
 					unsafeConsumer.accept(
-						_getObjectDefinitionInfoFieldSet(objectDefinitionId));
+						_getObjectDefinitionInfoFieldSet(
+							ObjectField.class.getSimpleName(),
+							objectDefinition));
 				}
 			}
+		).infoFieldSetEntries(
+			_getAttachmentObjectDefinitionInfoFieldSetEntries(
+				objectDefinitionId)
+		).infoFieldSetEntries(
+			_getParentsInfoFieldSets(objectDefinitionId)
 		).infoFieldSetEntry(
 			_templateInfoItemFieldSetProvider.getInfoFieldSet(modelClassName)
 		).infoFieldSetEntry(
@@ -435,29 +557,14 @@ public class ObjectEntryInfoItemFormProvider
 	}
 
 	private InfoFieldSet _getObjectDefinitionInfoFieldSet(
-			long objectDefinitionId)
-		throws NoSuchFormVariationException {
-
-		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.fetchObjectDefinition(
-				objectDefinitionId);
-
-		if (objectDefinition == null) {
-			throw new NoSuchFormVariationException(
-				String.valueOf(objectDefinitionId),
-				new NoSuchObjectDefinitionException());
-		}
+		String namespace, ObjectDefinition objectDefinition) {
 
 		return InfoFieldSet.builder(
 		).infoFieldSetEntry(
 			unsafeConsumer -> {
 				for (ObjectField objectField :
 						_objectFieldLocalService.getObjectFields(
-							objectDefinitionId)) {
-
-					if (objectField.isSystem()) {
-						continue;
-					}
+							objectDefinition.getObjectDefinitionId(), false)) {
 
 					if (Validator.isNotNull(
 							objectField.getRelationshipType())) {
@@ -485,7 +592,7 @@ public class ObjectEntryInfoItemFormProvider
 								ObjectFieldDBTypeUtil.getInfoFieldType(
 									objectField)
 							).namespace(
-								ObjectField.class.getSimpleName()
+								namespace
 							).name(
 								objectField.getName()
 							).editable(
@@ -530,6 +637,51 @@ public class ObjectEntryInfoItemFormProvider
 		}
 
 		return options;
+	}
+
+	private List<InfoFieldSetEntry> _getParentsInfoFieldSets(
+			long objectDefinitionId2)
+		throws NoSuchFormVariationException {
+
+		List<InfoFieldSetEntry> infoFieldSetEntries = new ArrayList<>();
+
+		if (objectDefinitionId2 == 0) {
+			return infoFieldSetEntries;
+		}
+
+		List<ObjectRelationship> objectRelationships =
+			_objectRelationshipLocalService.getObjectRelationships(
+				objectDefinitionId2,
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		for (ObjectRelationship objectRelationship : objectRelationships) {
+			ObjectDefinition objectDefinition1 =
+				_objectDefinitionLocalService.fetchObjectDefinition(
+					objectRelationship.getObjectDefinitionId1());
+
+			if (objectDefinition1 == null) {
+				_log.error(
+					new NoSuchObjectDefinitionException(
+						String.valueOf(
+							objectRelationship.getObjectDefinitionId1())));
+
+				continue;
+			}
+
+			if (objectDefinition1.isSystem()) {
+				continue;
+			}
+
+			infoFieldSetEntries.add(
+				_getObjectDefinitionInfoFieldSet(
+					StringBundler.concat(
+						ObjectRelationship.class.getSimpleName(),
+						StringPool.POUND, objectDefinition1.getName(),
+						StringPool.POUND, objectRelationship.getName()),
+					objectDefinition1));
+		}
+
+		return infoFieldSetEntries;
 	}
 
 	private String _getRelationshipLabelFieldName(ObjectField objectField) {

@@ -69,6 +69,7 @@ definition {
 			User.logoutPG();
 
 			User.loginUserWithFacebookSSOEnabledPG(
+				baseURL = "https://localhost:8443",
 				facebookEmail = ${facebookEmail},
 				facebookPassword = ${facebookPassword},
 				siteName = ${siteName});
@@ -125,7 +126,7 @@ definition {
 		property app.server.types = "jboss,tcserver,tomcat,weblogic,websphere,wildfly";
 		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property environment.acceptance = "true";
-		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,solaris,suse,ubuntu,windows";
+		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "Login#DefaultPortalLandingPageSetByProperty";
 

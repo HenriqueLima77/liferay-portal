@@ -305,10 +305,14 @@ definition {
 		}
 
 		task ("View collection items shown in Collection Display") {
-			for (var i : list "1,2,3") {
+			var n = 1;
+
+			for (var i : list "3,2,1") {
 				PageEditor.viewCollectionItem(
 					assetTitle = "Web Content Title ${i}",
-					row = ${i});
+					row = ${n});
+
+				var n = ${n} + 1;
 			}
 		}
 
@@ -324,7 +328,7 @@ definition {
 	@description = "This is a use case for LPS-86193. Can export display page template and import to Staging site via UI."
 	@priority = 3
 	test ExportImportDisplayPageTemplateWithCollectionDisplay {
-		property testray.component.names = "Display Pages,Fragments";
+		property testray.component.names = "Display Page Templates,Fragments";
 
 		task ("Add a display page template with Web Content Article type and Basic Web Content subtype") {
 			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(

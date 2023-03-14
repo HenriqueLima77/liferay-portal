@@ -25,7 +25,6 @@ import com.liferay.fragment.util.comparator.FragmentCollectionCreateDateComparat
 import com.liferay.frontend.token.definition.FrontendTokenDefinition;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
 import com.liferay.item.selector.ItemSelector;
-import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.item.selector.LayoutItemSelectorReturnType;
 import com.liferay.layout.item.selector.criterion.LayoutItemSelectorCriterion;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
@@ -47,7 +46,6 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.Theme;
-import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.portlet.url.builder.ResourceURLBuilder;
@@ -76,11 +74,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
-import javax.portlet.ResourceURL;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -101,11 +97,11 @@ public class EditStyleBookEntryDisplayContext {
 			(FragmentCollectionContributorRegistry)renderRequest.getAttribute(
 				StyleBookWebKeys.FRAGMENT_COLLECTION_CONTRIBUTOR_TRACKER);
 		_frontendTokenDefinitionRegistry =
-			(FrontendTokenDefinitionRegistry)_renderRequest.getAttribute(
+			(FrontendTokenDefinitionRegistry)renderRequest.getAttribute(
 				FrontendTokenDefinitionRegistry.class.getName());
-		_itemSelector = (ItemSelector)_renderRequest.getAttribute(
+		_itemSelector = (ItemSelector)renderRequest.getAttribute(
 			ItemSelector.class.getName());
-		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
 		_setViewAttributes();
@@ -485,35 +481,23 @@ public class EditStyleBookEntryDisplayContext {
 		LayoutPageTemplateEntry layoutPageTemplateEntry) {
 
 		try {
-			Layout layout = LayoutLocalServiceUtil.getLayout(
-				layoutPageTemplateEntry.getPlid());
-
 			if (layoutPageTemplateEntry.getType() ==
 					LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE) {
 
-				ResourceURL getPagePreviewURL = PortletURLFactoryUtil.create(
-					_httpServletRequest,
-					ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
-					layout, PortletRequest.RESOURCE_PHASE);
-
-				getPagePreviewURL.setParameter(
-					"segmentsExperienceId",
-					String.valueOf(
-						SegmentsExperienceLocalServiceUtil.
-							fetchDefaultSegmentsExperienceId(
-								layoutPageTemplateEntry.getPlid())));
-				getPagePreviewURL.setResourceID(
-					"/layout_content_page_editor/get_page_preview");
-
-				String url = HttpComponentsUtil.addParameter(
-					getPagePreviewURL.toString(), "p_l_mode",
-					Constants.PREVIEW);
-
-				return HttpComponentsUtil.addParameter(
-					url, "styleBookEntryPreview", true);
+				return HttpComponentsUtil.addParameters(
+					_themeDisplay.getPortalURL() + _themeDisplay.getPathMain() +
+						"/portal/get_page_preview",
+					"p_l_mode", Constants.PREVIEW, "segmentsExperienceId",
+					SegmentsExperienceLocalServiceUtil.
+						fetchDefaultSegmentsExperienceId(
+							layoutPageTemplateEntry.getPlid()),
+					"selPlid", layoutPageTemplateEntry.getPlid(),
+					"styleBookEntryPreview", true);
 			}
 
-			return _getPreviewURL(layout);
+			return _getPreviewURL(
+				LayoutLocalServiceUtil.getLayout(
+					layoutPageTemplateEntry.getPlid()));
 		}
 		catch (PortalException portalException) {
 			_log.error(portalException);

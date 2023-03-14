@@ -16,7 +16,6 @@ package com.liferay.fragment.renderer.categorization.inputs.internal;
 
 import com.liferay.asset.taglib.servlet.taglib.AssetTagsSelectorTag;
 import com.liferay.fragment.constants.FragmentConstants;
-import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
@@ -42,9 +41,7 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
@@ -97,15 +94,6 @@ public class TagsInputFragmentRenderer implements FragmentRenderer {
 	}
 
 	@Override
-	public boolean isSelectable(HttpServletRequest httpServletRequest) {
-		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-161631"))) {
-			return true;
-		}
-
-		return false;
-	}
-
-	@Override
 	public void render(
 		FragmentRendererContext fragmentRendererContext,
 		HttpServletRequest httpServletRequest,
@@ -140,10 +128,7 @@ public class TagsInputFragmentRenderer implements FragmentRenderer {
 
 			printWriter.write("<div");
 
-			if (Objects.equals(
-					fragmentRendererContext.getMode(),
-					FragmentEntryLinkConstants.EDIT)) {
-
+			if (fragmentRendererContext.isEditMode()) {
 				printWriter.write(" inert");
 			}
 
@@ -238,10 +223,7 @@ public class TagsInputFragmentRenderer implements FragmentRenderer {
 			HttpServletResponse httpServletResponse, PrintWriter printWriter)
 		throws Exception {
 
-		if (!Objects.equals(
-				fragmentRendererContext.getMode(),
-				FragmentEntryLinkConstants.EDIT)) {
-
+		if (!fragmentRendererContext.isEditMode()) {
 			return;
 		}
 

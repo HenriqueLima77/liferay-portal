@@ -48,6 +48,7 @@ import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
+import com.liferay.portal.vulcan.multipart.MultipartBody;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.permission.Permission;
@@ -1396,6 +1397,39 @@ public abstract class BaseUserAccountResourceImpl
 		).build();
 	}
 
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-user/v1.0/user-accounts/{userAccountId}/image'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "userAccountId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "UserAccount")}
+	)
+	@javax.ws.rs.Consumes("multipart/form-data")
+	@javax.ws.rs.Path("/user-accounts/{userAccountId}/image")
+	@javax.ws.rs.POST
+	@Override
+	public Response postUserAccountImage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("userAccountId")
+			Long userAccountId,
+			MultipartBody multipartBody)
+		throws Exception {
+
+		Response.ResponseBuilder responseBuilder = Response.ok();
+
+		return responseBuilder.build();
+	}
+
 	@Override
 	@SuppressWarnings("PMD.UnusedLocalVariable")
 	public void create(
@@ -1891,7 +1925,9 @@ public abstract class BaseUserAccountResourceImpl
 						permission = _toPermission(
 							resourceActions, resourcePermission, role);
 
-						permissions.put(role.getName(), permission);
+						if (permission != null) {
+							permissions.put(role.getName(), permission);
+						}
 					}
 					else {
 						Set<String> actionsIdsSet = new HashSet<>();
@@ -1930,6 +1966,10 @@ public abstract class BaseUserAccountResourceImpl
 			if ((actionIds & bitwiseValue) == bitwiseValue) {
 				actionsIdsSet.add(resourceAction.getActionId());
 			}
+		}
+
+		if (actionsIdsSet.isEmpty()) {
+			return null;
 		}
 
 		return new Permission() {

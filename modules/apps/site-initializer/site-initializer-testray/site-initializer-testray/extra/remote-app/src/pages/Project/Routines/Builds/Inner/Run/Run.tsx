@@ -16,10 +16,10 @@ import {useParams} from 'react-router-dom';
 
 import Container from '../../../../../../components/Layout/Container';
 import ListView from '../../../../../../components/ListView';
+import SearchBuilder from '../../../../../../core/SearchBuilder';
 import useRuns from '../../../../../../hooks/useRuns';
 import i18n from '../../../../../../i18n';
 import {testrayRunImpl} from '../../../../../../services/rest';
-import {SearchBuilder} from '../../../../../../util/search';
 import RunFormModal from './RunFormModal';
 import useRunActions from './useRunActions';
 
@@ -32,6 +32,15 @@ const Runs = () => {
 		<Container className="mt-4">
 			<ListView
 				forceRefetch={formModal.forceRefetch}
+				initialContext={{
+					columns: {
+						inprogress: false,
+						passed: false,
+						total: false,
+						untested: false,
+					},
+					columnsFixed: ['number'],
+				}}
 				managementToolbarProps={{
 					addButton: () => formModal.modal.open(),
 					filterSchema: 'buildRuns',

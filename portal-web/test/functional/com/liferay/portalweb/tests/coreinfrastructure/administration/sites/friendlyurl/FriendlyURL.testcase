@@ -1,6 +1,7 @@
 @component-name = "portal-friendly-url"
 definition {
 
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Friendly URL Service";
@@ -256,7 +257,7 @@ definition {
 	@priority = 5
 	test ViewLocaleChangeThroughFriendlyURL {
 		property environment.acceptance = "true";
-		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,solaris,suse,ubuntu,windows";
+		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
 		property portal.acceptance = "true";
 
 		task ("View the inline text on Home page is in English as default") {

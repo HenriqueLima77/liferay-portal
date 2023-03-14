@@ -25,13 +25,14 @@ import {fromControlsId} from '../../../../../app/components/layout_data_items/Co
 import {ITEM_ACTIVATION_ORIGINS} from '../../../../../app/config/constants/itemActivationOrigins';
 import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
 import {
-	ARROW_DOWN_KEYCODE,
-	ARROW_LEFT_KEYCODE,
-	ARROW_RIGHT_KEYCODE,
-	ARROW_UP_KEYCODE,
-} from '../../../../../app/config/constants/keycodes';
+	ARROW_DOWN_KEY_CODE,
+	ARROW_LEFT_KEY_CODE,
+	ARROW_RIGHT_KEY_CODE,
+	ARROW_UP_KEY_CODE,
+} from '../../../../../app/config/constants/keyboardCodes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../app/config/constants/layoutDataItemTypes';
 import {VIEWPORT_SIZES} from '../../../../../app/config/constants/viewportSizes';
+import {config} from '../../../../../app/config/index';
 import {
 	useActivationOrigin,
 	useActiveItemId,
@@ -200,6 +201,7 @@ function StructureTreeNodeContent({
 	const dispatch = useDispatch();
 	const hoverItem = useHoverItem();
 	const nodeRef = useRef();
+	const restrictedItemIds = new Set(config.restrictedItemIds);
 	const selectedViewportSize = useSelector(
 		(state) => state.selectedViewportSize
 	);
@@ -298,11 +300,11 @@ function StructureTreeNodeContent({
 
 		if (
 			[
-				ARROW_DOWN_KEYCODE,
-				ARROW_LEFT_KEYCODE,
-				ARROW_RIGHT_KEYCODE,
-				ARROW_UP_KEYCODE,
-			].includes(event.keyCode)
+				ARROW_DOWN_KEY_CODE,
+				ARROW_LEFT_KEY_CODE,
+				ARROW_RIGHT_KEY_CODE,
+				ARROW_UP_KEY_CODE,
+			].includes(event.nativeEvent.code)
 		) {
 			document.activeElement
 				.closest('.lfr-treeview-node-list-item')
@@ -439,8 +441,10 @@ function StructureTreeNodeContent({
 				ref={nodeRef}
 				showPermissionRestriction={
 					Liferay.FeatureFlags['LPS-169923'] &&
-					node.type === LAYOUT_DATA_ITEM_TYPES.form &&
-					formIsRestricted(item)
+					((node.type === LAYOUT_DATA_ITEM_TYPES.form &&
+						formIsRestricted(item)) ||
+						(node.type === LAYOUT_DATA_ITEM_TYPES.collection &&
+							restrictedItemIds.has(item.itemId)))
 				}
 				showUnavailableWarning={
 					Liferay.FeatureFlags['LPS-169923'] &&

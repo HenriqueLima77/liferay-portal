@@ -242,13 +242,22 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			objectDefinition1, (List<ObjectDefinition>)page.getItems());
 		assertContains(
 			objectDefinition2, (List<ObjectDefinition>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetObjectDefinitionsPage_getExpectedActions());
 
 		objectDefinitionResource.deleteObjectDefinition(
 			objectDefinition1.getId());
 
 		objectDefinitionResource.deleteObjectDefinition(
 			objectDefinition2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetObjectDefinitionsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -1189,6 +1198,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("modifiable", additionalAssertFieldName)) {
+				if (objectDefinition.getModifiable() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("name", additionalAssertFieldName)) {
 				if (objectDefinition.getName() == null) {
 					valid = false;
@@ -1225,6 +1242,16 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 					"objectRelationships", additionalAssertFieldName)) {
 
 				if (objectDefinition.getObjectRelationships() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"objectValidationRules", additionalAssertFieldName)) {
+
+				if (objectDefinition.getObjectValidationRules() == null) {
 					valid = false;
 				}
 
@@ -1340,6 +1367,13 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 	}
 
 	protected void assertValid(Page<ObjectDefinition> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<ObjectDefinition> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<ObjectDefinition> objectDefinitions =
@@ -1355,6 +1389,20 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1583,6 +1631,17 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("modifiable", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						objectDefinition1.getModifiable(),
+						objectDefinition2.getModifiable())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("name", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						objectDefinition1.getName(),
@@ -1633,6 +1692,19 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						objectDefinition1.getObjectRelationships(),
 						objectDefinition2.getObjectRelationships())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"objectValidationRules", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.getObjectValidationRules(),
+						objectDefinition2.getObjectValidationRules())) {
 
 					return false;
 				}
@@ -1837,6 +1909,10 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -2010,6 +2086,11 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("modifiable")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("name")) {
 			sb.append("'");
 			sb.append(String.valueOf(objectDefinition.getName()));
@@ -2034,6 +2115,11 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		}
 
 		if (entityFieldName.equals("objectRelationships")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("objectValidationRules")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -2175,6 +2261,7 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				externalReferenceCode = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
+				modifiable = RandomTestUtil.randomBoolean();
 				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				panelAppOrder = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
