@@ -1393,6 +1393,12 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 		}
 
 		if (ddmFormValidationException instanceof
+			DDMFormValidationException.MustSetFieldReference) {
+
+			return new DataDefinitionValidationException.MustSetFieldReference();
+		}
+
+		if (ddmFormValidationException instanceof
 				DDMFormValidationException.MustSetFieldType) {
 
 			DDMFormValidationException.MustSetFieldType mustSetFieldType =
