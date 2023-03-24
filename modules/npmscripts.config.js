@@ -16,12 +16,7 @@ const CHECK_AND_FIX_GLOBS = [
 	'!settings.json',
 	'!tsconfig.json',
 	'/{,dxp/}*.{js,ts}',
-	'/{,dxp/}apps/*/*/*.{js,ts,tsx}',
-	'/{,dxp/}apps/*/*/*/*.{js,ts,tsx}',
-	'/{,dxp/}apps/*/*/*/{src,test,extra}/**/*.{js,scss,ts,tsx}',
-	'/{,dxp/}apps/*/*/*/{src}/**/*.{jsp,jspf}',
-	'/{,dxp/}apps/*/*/{src,test,extra}/**/*.{js,scss,ts,tsx}',
-	'/{,dxp/}apps/*/*/{src}/**/*.{jsp,jspf}',
+	'/{,dxp/}{,apps/}**/*.{js,ts,tsx,scss,jsp,jspf}',
 ];
 
 module.exports = {
@@ -441,7 +436,9 @@ module.exports = {
 			'dynamic-data-mapping-form-renderer',
 		],
 		imports: {
+			'@liferay/frontend-data-set-web': [],
 			'@liferay/frontend-js-dependencies-web': [
+				'@liferay/js-api',
 				'clipboard',
 				'dagre',
 				'date-fns',

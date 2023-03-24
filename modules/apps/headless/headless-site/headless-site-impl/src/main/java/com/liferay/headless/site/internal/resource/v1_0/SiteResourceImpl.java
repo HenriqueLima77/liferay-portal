@@ -16,16 +16,14 @@ package com.liferay.headless.site.internal.resource.v1_0;
 
 import com.liferay.headless.site.dto.v1_0.Site;
 import com.liferay.headless.site.resource.v1_0.SiteResource;
-import com.liferay.portal.kernel.change.tracking.CTTransactionException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.LayoutSetPrototype;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.GroupService;
+import com.liferay.portal.kernel.service.LayoutSetPrototypeLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.transaction.Propagation;
-import com.liferay.portal.kernel.transaction.TransactionConfig;
-import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -39,7 +37,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,8 +54,7 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 	@Override
 	public Site postSite(Site site) throws Exception {
 		try {
-			Group group = TransactionInvokerUtil.invoke(
-				_transactionConfig, new GroupCallable(site));
+			Group group = _addGroup(site);
 
 			return new Site() {
 				{
@@ -68,9 +64,6 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 					name = group.getName(LocaleUtil.getDefault());
 				}
 			};
-		}
-		catch (CTTransactionException ctTransactionException) {
-			throw ctTransactionException;
 		}
 		catch (Throwable throwable) {
 			throw new Exception(throwable);
@@ -92,6 +85,45 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 				"Template type cannot be empty if template key is specified");
 		}
 
+		if (Objects.equals(
+				Site.TemplateType.SITE_INITIALIZER, site.getTemplateType())) {
+
+			SiteInitializer siteInitializer =
+				_siteInitializerRegistry.getSiteInitializer(
+					site.getTemplateKey());
+
+			if (siteInitializer == null) {
+				throw new IllegalArgumentException(
+					"No site initializer was found for site template key " +
+						site.getTemplateKey());
+			}
+
+			if (!siteInitializer.isActive(contextCompany.getCompanyId())) {
+				throw new IllegalArgumentException(
+					"Site initializer with site template key " +
+						site.getTemplateKey() + " is inactive");
+			}
+		}
+		else if (Objects.equals(
+					Site.TemplateType.SITE_TEMPLATE, site.getTemplateType())) {
+
+			LayoutSetPrototype layoutSetPrototype =
+				_layoutSetPrototypeLocalService.fetchLayoutSetPrototype(
+					GetterUtil.getLongStrict(site.getTemplateKey()));
+
+			if (layoutSetPrototype == null) {
+				throw new IllegalArgumentException(
+					"No site template found for site template key " +
+						site.getTemplateKey());
+			}
+
+			if (!layoutSetPrototype.isActive()) {
+				throw new IllegalArgumentException(
+					"Site template with site template key " +
+						site.getTemplateKey() + " is inactive");
+			}
+		}
+
 		ServiceContext serviceContext = new ServiceContext() {
 			{
 				setCompanyId(contextCompany.getCompanyId());
@@ -104,6 +136,14 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 
 		try {
 			return _addGroup(site, serviceContext);
+		}
+		catch (Exception exception) {
+
+			// LPS-169057
+
+			PermissionCacheUtil.clearCache(contextUser.getUserId());
+
+			throw exception;
 		}
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
@@ -173,10 +213,6 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 		return group;
 	}
 
-	private static final TransactionConfig _transactionConfig =
-		TransactionConfig.Factory.create(
-			Propagation.REQUIRED, new Class<?>[] {Exception.class});
-
 	@Reference
 	private GroupLocalService _groupLocalService;
 
@@ -184,34 +220,12 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 	private GroupService _groupService;
 
 	@Reference
+	private LayoutSetPrototypeLocalService _layoutSetPrototypeLocalService;
+
+	@Reference
 	private SiteInitializerRegistry _siteInitializerRegistry;
 
 	@Reference
 	private Sites _sites;
-
-	private class GroupCallable implements Callable<Group> {
-
-		@Override
-		public Group call() throws Exception {
-			try {
-				return _addGroup(_site);
-			}
-			catch (Exception exception) {
-
-				// LPS-169057
-
-				PermissionCacheUtil.clearCache(contextUser.getUserId());
-
-				throw exception;
-			}
-		}
-
-		private GroupCallable(Site site) {
-			_site = site;
-		}
-
-		private final Site _site;
-
-	}
 
 }

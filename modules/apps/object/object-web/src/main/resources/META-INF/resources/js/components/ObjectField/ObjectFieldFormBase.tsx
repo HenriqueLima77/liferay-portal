@@ -29,6 +29,7 @@ import React, {
 	useState,
 } from 'react';
 
+import {defaultLanguageId} from '../../utils/constants';
 import {toCamelCase} from '../../utils/string';
 import {AggregationFormBase} from './AggregationFormBase';
 import {AttachmentFormBase} from './AttachmentFormBase';
@@ -67,9 +68,17 @@ export type ObjectFieldErrors = FormError<
 	ObjectField & {[key in ObjectFieldSettingName]: unknown}
 >;
 
-const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
-
 const fieldSettingsMap = new Map<string, ObjectFieldSetting[]>([
+	[
+		'Aggregation',
+		[
+			{
+				name: 'filters',
+				objectFieldId: 0,
+				value: Array(0),
+			},
+		],
+	],
 	[
 		'Attachment',
 		[

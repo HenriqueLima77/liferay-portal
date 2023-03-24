@@ -26,7 +26,7 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 
 <portlet:actionURL var="editArticleActionURL" windowState="<%= WindowState.MAXIMIZED.toString() %>">
 	<portlet:param name="mvcPath" value="/edit_article.jsp" />
-	<portlet:param name="ddmStructureKey" value="<%= journalEditArticleDisplayContext.getDDMStructureKey() %>" />
+	<portlet:param name="ddmStructureId" value="<%= String.valueOf(journalEditArticleDisplayContext.getDDMStructureId()) %>" />
 </portlet:actionURL>
 
 <portlet:renderURL var="editArticleRenderURL" windowState="<%= WindowState.MAXIMIZED.toString() %>">
@@ -47,7 +47,7 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 	<aui:input name="articleId" type="hidden" value="<%= journalEditArticleDisplayContext.getArticleId() %>" />
 	<aui:input name="version" type="hidden" value="<%= ((article == null) || article.isNew()) ? journalEditArticleDisplayContext.getVersion() : article.getVersion() %>" />
 	<aui:input name="articleURL" type="hidden" value="<%= editArticleRenderURL %>" />
-	<aui:input name="ddmStructureId" type="hidden" />
+	<aui:input name="ddmStructureId" type="hidden" value="<%= journalEditArticleDisplayContext.getDDMStructureId() %>" />
 	<aui:input name="ddmTemplateId" type="hidden" />
 	<aui:input name="availableLocales" type="hidden" />
 	<aui:input name="defaultLanguageId" type="hidden" value="<%= journalEditArticleDisplayContext.getDefaultArticleLanguageId() %>" />
@@ -95,7 +95,7 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 								<portlet:param name="redirect" value="<%= currentURL %>" />
 								<portlet:param name="groupId" value="<%= String.valueOf(journalEditArticleDisplayContext.getGroupId()) %>" />
 								<portlet:param name="articleId" value="<%= journalEditArticleDisplayContext.getArticleId() %>" />
-								<portlet:param name="ddmStructureKey" value="<%= ddmStructure.getStructureKey() %>" />
+								<portlet:param name="ddmStructureId" value="<%= String.valueOf(ddmStructure.getStructureId()) %>" />
 							</portlet:actionURL>
 
 							<aui:button cssClass="btn-sm mr-3" data-url="<%= resetValuesDDMStructureURL %>" name="resetValuesButton" value="reset-values" />
@@ -294,6 +294,7 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 			<div class="article-content-content">
 				<liferay-data-engine:data-layout-renderer
 					containerId='<%= liferayPortletResponse.getNamespace() + "dataEngineLayoutRenderer" %>'
+					contentType="journal"
 					dataDefinitionId="<%= ddmStructure.getStructureId() %>"
 					dataRecordValues="<%= journalEditArticleDisplayContext.getValues(ddmStructure) %>"
 					defaultLanguageId="<%= journalEditArticleDisplayContext.getDefaultArticleLanguageId() %>"

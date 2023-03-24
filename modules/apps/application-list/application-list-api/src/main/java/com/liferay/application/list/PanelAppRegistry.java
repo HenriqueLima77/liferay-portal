@@ -39,6 +39,9 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
@@ -56,20 +59,14 @@ public class PanelAppRegistry {
 		String parentPanelCategoryKey, PermissionChecker permissionChecker,
 		Group group) {
 
-		List<PanelApp> panelApps = getPanelApps(parentPanelCategoryKey);
+		List<PanelApp> panelApps = getPanelApps(
+			parentPanelCategoryKey, permissionChecker, group);
 
-		for (PanelApp panelApp : panelApps) {
-			try {
-				if (panelApp.isShow(permissionChecker, group)) {
-					return panelApp;
-				}
-			}
-			catch (PortalException portalException) {
-				_log.error(portalException);
-			}
+		if (panelApps.isEmpty()) {
+			return null;
 		}
 
-		return null;
+		return panelApps.get(0);
 	}
 
 	public List<PanelApp> getPanelApps(PanelCategory parentPanelCategory) {
@@ -136,7 +133,14 @@ public class PanelAppRegistry {
 			panelApps,
 			panelApp -> {
 				try {
-					return panelApp.isShow(permissionChecker, group);
+					PanelAppShowFilter panelAppShowFilter = _panelAppShowFilter;
+
+					if (panelAppShowFilter == null) {
+						return panelApp.isShow(permissionChecker, group);
+					}
+
+					return panelAppShowFilter.isShow(
+						panelApp, permissionChecker, group);
 				}
 				catch (PortalException portalException) {
 					_log.error(portalException);
@@ -152,19 +156,11 @@ public class PanelAppRegistry {
 
 		int count = 0;
 
-		for (PanelApp panelApp : getPanelApps(parentPanelCategoryKey)) {
-			int notificationsCount = panelApp.getNotificationsCount(user);
+		for (PanelApp panelApp :
+				getPanelApps(
+					parentPanelCategoryKey, permissionChecker, group)) {
 
-			try {
-				if ((notificationsCount > 0) &&
-					panelApp.isShow(permissionChecker, group)) {
-
-					count += notificationsCount;
-				}
-			}
-			catch (PortalException portalException) {
-				_log.error(portalException);
-			}
+			count += panelApp.getNotificationsCount(user);
 		}
 
 		return count;
@@ -173,8 +169,7 @@ public class PanelAppRegistry {
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
-			bundleContext, PanelApp.class,
-			"(panel.category.key=*)(depot.panel.app.wrapper=true)",
+			bundleContext, PanelApp.class, "(panel.category.key=*)",
 			new PropertyServiceReferenceMapper<>("panel.category.key"),
 			new ServiceTrackerCustomizer<PanelApp, PanelApp>() {
 
@@ -242,6 +237,13 @@ public class PanelAppRegistry {
 
 	@Reference
 	private GroupProvider _groupProvider;
+
+	@Reference(
+		cardinality = ReferenceCardinality.OPTIONAL,
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY
+	)
+	private volatile PanelAppShowFilter _panelAppShowFilter;
 
 	@Reference
 	private PortletLocalService _portletLocalService;

@@ -20,7 +20,6 @@ import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.internal.odata.entity.v1_0.ObjectEntryEntityModel;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
-import com.liferay.object.rest.petra.sql.dsl.expression.FilterPredicateFactory;
 import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -35,11 +34,11 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
@@ -52,7 +51,6 @@ import java.util.Map;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 /**
@@ -61,7 +59,7 @@ import javax.ws.rs.core.MultivaluedMap;
 public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 
 	public ObjectEntryResourceImpl(
-		FilterPredicateFactory filterPredicateFactory,
+		DTOConverterRegistry dtoConverterRegistry,
 		ObjectDefinitionLocalService objectDefinitionLocalService,
 		ObjectEntryLocalService objectEntryLocalService,
 		ObjectEntryManagerRegistry objectEntryManagerRegistry,
@@ -71,7 +69,7 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 		SystemObjectDefinitionMetadataRegistry
 			systemObjectDefinitionMetadataRegistry) {
 
-		_filterPredicateFactory = filterPredicateFactory;
+		_dtoConverterRegistry = dtoConverterRegistry;
 		_objectDefinitionLocalService = objectDefinitionLocalService;
 		_objectEntryLocalService = objectEntryLocalService;
 		_objectEntryManagerRegistry = objectEntryManagerRegistry;
@@ -192,7 +190,7 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 		throws Exception {
 
 		return new ObjectEntryEntityModel(
-			_objectDefinition,
+			_objectDefinition.getObjectDefinitionId(),
 			_objectFieldLocalService.getObjectFields(
 				_objectDefinition.getObjectDefinitionId()));
 	}
@@ -207,18 +205,9 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 			_objectEntryManagerRegistry.getObjectEntryManager(
 				_objectDefinition.getStorageType());
 
-		Predicate predicate = null;
-
-		if (contextHttpServletRequest != null) {
-			predicate = _filterPredicateFactory.create(
-				getEntityModel(new MultivaluedHashMap<String, Object>()),
-				ParamUtil.getString(contextHttpServletRequest, "filter"),
-				_objectDefinition.getObjectDefinitionId());
-		}
-
 		return objectEntryManager.getObjectEntries(
 			contextCompany.getCompanyId(), _objectDefinition, null, aggregation,
-			_getDTOConverterContext(null), pagination, predicate, search,
+			_getDTOConverterContext(null), pagination, _predicate, search,
 			sorts);
 	}
 
@@ -260,10 +249,7 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 
 		return objectEntryManager.getObjectEntries(
 			contextCompany.getCompanyId(), _objectDefinition, scopeKey,
-			aggregation, _getDTOConverterContext(null), pagination,
-			_filterPredicateFactory.create(
-				ParamUtil.getString(contextHttpServletRequest, "filter"),
-				_objectDefinition.getObjectDefinitionId()),
+			aggregation, _getDTOConverterContext(null), pagination, _predicate,
 			search, sorts);
 	}
 
@@ -480,10 +466,8 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 
 		existingObjectEntry.setProperties(
 			() -> {
-				ObjectEntry getObjectEntry = getByExternalReferenceCode(
-					existingObjectEntry.getExternalReferenceCode());
-
-				Map<String, Object> properties = getObjectEntry.getProperties();
+				Map<String, Object> properties =
+					existingObjectEntry.getProperties();
 
 				properties.putAll(objectEntry.getProperties());
 
@@ -495,8 +479,8 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 		Long objectEntryId) {
 
 		return new DefaultDTOConverterContext(
-			contextAcceptLanguage.isAcceptAllLanguages(), null, null,
-			contextHttpServletRequest, objectEntryId,
+			contextAcceptLanguage.isAcceptAllLanguages(), null,
+			_dtoConverterRegistry, contextHttpServletRequest, objectEntryId,
 			contextAcceptLanguage.getPreferredLocale(), contextUriInfo,
 			contextUser);
 	}
@@ -596,7 +580,7 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 		throw new NotFoundException("Missing parameter \"objectDefinitionId\"");
 	}
 
-	private final FilterPredicateFactory _filterPredicateFactory;
+	private final DTOConverterRegistry _dtoConverterRegistry;
 
 	@Context
 	private ObjectDefinition _objectDefinition;
@@ -607,6 +591,10 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 	private final ObjectFieldLocalService _objectFieldLocalService;
 	private final ObjectRelationshipService _objectRelationshipService;
 	private final ObjectScopeProviderRegistry _objectScopeProviderRegistry;
+
+	@Context
+	private Predicate _predicate;
+
 	private final SystemObjectDefinitionMetadataRegistry
 		_systemObjectDefinitionMetadataRegistry;
 

@@ -109,7 +109,6 @@ import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Group;
@@ -656,6 +655,14 @@ public class BundleSiteInitializerTest {
 		Assert.assertNotNull(cpDefinition);
 		Assert.assertEquals("Test Commerce Product", cpDefinition.getName());
 
+		ExpandoBridge expandoBridge = cpDefinition.getExpandoBridge();
+
+		Assert.assertEquals(
+			0.1, expandoBridge.getAttribute("Test Expando Column 1"));
+		Assert.assertEquals(
+			"Test Expando Column Value 2",
+			expandoBridge.getAttribute("Test Expando Column 2"));
+
 		CPAttachmentFileEntry cpAttachmentFileEntry =
 			_cpDefinitionLocalService.getDefaultImageCPAttachmentFileEntry(
 				cpDefinition.getCPDefinitionId());
@@ -782,18 +789,99 @@ public class BundleSiteInitializerTest {
 		Assert.assertTrue(string.contains("1. Revelation"));
 	}
 
-	private void _assertExpandoColumns() {
+	private void _assertExpandoColumns1() {
 		ExpandoBridge expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
 			_serviceContext.getCompanyId(),
 			"com.liferay.commerce.product.model.CPDefinition");
 
 		Assert.assertNotNull(expandoBridge);
 		Assert.assertEquals(
-			expandoBridge.getAttribute("Test Expando Column 1"), 0.1);
+			1.5, expandoBridge.getAttribute("Test Expando Column 1"));
 		Assert.assertEquals(
-			"Test Expando Column Value 2",
+			"Test Default Value",
 			expandoBridge.getAttribute("Test Expando Column 2"));
 		Assert.assertNull(expandoBridge.getAttribute("Test Expando Column 3"));
+
+		UnicodeProperties unicodeProperties =
+			expandoBridge.getAttributeProperties("Test Expando Column 1");
+
+		Assert.assertTrue(unicodeProperties.isEmpty());
+
+		unicodeProperties = expandoBridge.getAttributeProperties(
+			"Test Expando Column 2");
+
+		Assert.assertTrue(unicodeProperties.isEmpty());
+
+		expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
+			_serviceContext.getCompanyId(),
+			"com.liferay.commerce.model.CommerceOrderItem");
+
+		Assert.assertNotNull(expandoBridge);
+		Assert.assertNotNull(
+			expandoBridge.getAttribute("Test Expando Column 3"));
+
+		unicodeProperties = expandoBridge.getAttributeProperties(
+			"Test Expando Column 3");
+
+		Assert.assertFalse(unicodeProperties.isEmpty());
+		Assert.assertFalse(
+			GetterUtil.getBoolean(unicodeProperties.getProperty("secret")));
+	}
+
+	private void _assertExpandoColumns2() {
+		ExpandoBridge expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
+			_serviceContext.getCompanyId(),
+			"com.liferay.commerce.product.model.CPDefinition");
+
+		Assert.assertNotNull(expandoBridge);
+		Assert.assertEquals(
+			1.5, expandoBridge.getAttribute("Test Expando Column 1"));
+		Assert.assertEquals(
+			"Test Default Value Update",
+			expandoBridge.getAttribute("Test Expando Column 2"));
+		Assert.assertNull(expandoBridge.getAttribute("Test Expando Column 3"));
+
+		UnicodeProperties unicodeProperties =
+			expandoBridge.getAttributeProperties("Test Expando Column 1");
+
+		Assert.assertTrue(unicodeProperties.isEmpty());
+
+		unicodeProperties = expandoBridge.getAttributeProperties(
+			"Test Expando Column 2");
+
+		Assert.assertFalse(unicodeProperties.isEmpty());
+		Assert.assertEquals(
+			2,
+			GetterUtil.getInteger(unicodeProperties.getProperty("index-type")));
+
+		expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
+			_serviceContext.getCompanyId(),
+			"com.liferay.commerce.model.CommerceOrderItem");
+
+		Assert.assertNotNull(expandoBridge);
+		Assert.assertNotNull(
+			expandoBridge.getAttribute("Test Expando Column 3"));
+
+		unicodeProperties = expandoBridge.getAttributeProperties(
+			"Test Expando Column 3");
+
+		Assert.assertFalse(unicodeProperties.isEmpty());
+		Assert.assertTrue(
+			GetterUtil.getBoolean(unicodeProperties.getProperty("secret")));
+
+		expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
+			_serviceContext.getCompanyId(),
+			"com.liferay.portal.kernel.model.User");
+
+		Assert.assertNotNull(expandoBridge);
+		Assert.assertTrue(
+			GetterUtil.getBoolean(
+				expandoBridge.getAttribute("Test Expando Column 4")));
+
+		unicodeProperties = expandoBridge.getAttributeProperties(
+			"Test Expando Column 4");
+
+		Assert.assertTrue(unicodeProperties.isEmpty());
 	}
 
 	private void _assertFragmentEntries() throws Exception {
@@ -1037,10 +1125,6 @@ public class BundleSiteInitializerTest {
 	}
 
 	private void _assertLayoutUtilityPageEntries() {
-		if (!FeatureFlagManagerUtil.isEnabled("LPS-162765")) {
-			return;
-		}
-
 		LayoutUtilityPageEntry defaultLayoutUtilityPageEntry =
 			_layoutUtilityPageEntryLocalService.
 				fetchDefaultLayoutUtilityPageEntry(
@@ -1067,7 +1151,7 @@ public class BundleSiteInitializerTest {
 			layoutUtilityPageEntry.isDefaultLayoutUtilityPageEntry());
 	}
 
-	private void _assertListTypeDefinitions() throws Exception {
+	private void _assertListTypeDefinitions1() throws Exception {
 		ListTypeDefinitionResource.Builder listTypeDefinitionResourceBuilder =
 			_listTypeDefinitionResourceFactory.create();
 
@@ -1076,30 +1160,123 @@ public class BundleSiteInitializerTest {
 				_serviceContext.fetchUser()
 			).build();
 
-		Page<ListTypeDefinition> listTypeDefinitionsPage =
-			listTypeDefinitionResource.getListTypeDefinitionsPage(
-				null, null,
-				listTypeDefinitionResource.toFilter(
-					"name eq 'Test List Type Definition'"),
-				null, null);
+		ListTypeDefinition listTypeDefinition1 =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					"TESTLISTTYPEDEFINITION1");
 
-		ListTypeDefinition listTypeDefinition =
-			listTypeDefinitionsPage.fetchFirstItem();
+		Assert.assertEquals(
+			"Test List Type Definition 1", listTypeDefinition1.getName());
 
-		Assert.assertNotNull(listTypeDefinition);
+		ListTypeEntry[] listTypeEntries1 =
+			listTypeDefinition1.getListTypeEntries();
 
-		ListTypeEntry[] listTypeEntries =
-			listTypeDefinition.getListTypeEntries();
+		ListTypeEntry listTypeEntry1 = listTypeEntries1[0];
 
-		ListTypeEntry listTypeEntry1 = listTypeEntries[0];
-
-		Assert.assertNotNull(listTypeEntry1);
 		Assert.assertEquals("testlisttypeentry1", listTypeEntry1.getKey());
+		Assert.assertEquals("Test List Type Entry 1", listTypeEntry1.getName());
 
-		ListTypeEntry listTypeEntry2 = listTypeEntries[1];
+		ListTypeEntry listTypeEntry2 = listTypeEntries1[1];
 
-		Assert.assertNotNull(listTypeEntry2);
 		Assert.assertEquals("testlisttypeentry2", listTypeEntry2.getKey());
+		Assert.assertEquals("Test List Type Entry 2", listTypeEntry2.getName());
+
+		ListTypeDefinition listTypeDefinition2 =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					"TESTLISTTYPEDEFINITION2");
+
+		Assert.assertEquals(
+			"Test List Type Definition 2", listTypeDefinition2.getName());
+
+		ListTypeEntry[] listTypeEntries2 =
+			listTypeDefinition2.getListTypeEntries();
+
+		ListTypeEntry listTypeEntry3 = listTypeEntries2[0];
+
+		Assert.assertEquals("testlisttypeentry3", listTypeEntry3.getKey());
+		Assert.assertEquals("Test List Type Entry 3", listTypeEntry3.getName());
+
+		ListTypeEntry listTypeEntry4 = listTypeEntries2[1];
+
+		Assert.assertEquals("testlisttypeentry4", listTypeEntry4.getKey());
+		Assert.assertEquals("Test List Type Entry 4", listTypeEntry4.getName());
+	}
+
+	private void _assertListTypeDefinitions2() throws Exception {
+		ListTypeDefinitionResource.Builder listTypeDefinitionResourceBuilder =
+			_listTypeDefinitionResourceFactory.create();
+
+		ListTypeDefinitionResource listTypeDefinitionResource =
+			listTypeDefinitionResourceBuilder.user(
+				_serviceContext.fetchUser()
+			).build();
+
+		ListTypeDefinition listTypeDefinition1 =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					"TESTLISTTYPEDEFINITION1");
+
+		Assert.assertEquals(
+			"Test List Type Definition 1 Update",
+			listTypeDefinition1.getName());
+
+		ListTypeEntry[] listTypeEntries1 =
+			listTypeDefinition1.getListTypeEntries();
+
+		ListTypeEntry listTypeEntry1 = listTypeEntries1[0];
+
+		Assert.assertEquals("testlisttypeentry1", listTypeEntry1.getKey());
+		Assert.assertEquals(
+			"Test List Type Entry 1 Update", listTypeEntry1.getName());
+
+		ListTypeEntry listTypeEntry2 = listTypeEntries1[1];
+
+		Assert.assertEquals("testlisttypeentry2", listTypeEntry2.getKey());
+		Assert.assertEquals(
+			"Test List Type Entry 2 Update", listTypeEntry2.getName());
+
+		ListTypeDefinition listTypeDefinition2 =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					"TESTLISTTYPEDEFINITION2");
+
+		Assert.assertEquals(
+			"Test List Type Definition 2", listTypeDefinition2.getName());
+
+		ListTypeEntry[] listTypeEntries2 =
+			listTypeDefinition2.getListTypeEntries();
+
+		ListTypeEntry listTypeEntry3 = listTypeEntries2[0];
+
+		Assert.assertEquals("testlisttypeentry3", listTypeEntry3.getKey());
+		Assert.assertEquals("Test List Type Entry 3", listTypeEntry3.getName());
+
+		ListTypeEntry listTypeEntry4 = listTypeEntries2[1];
+
+		Assert.assertEquals("testlisttypeentry4", listTypeEntry4.getKey());
+		Assert.assertEquals("Test List Type Entry 4", listTypeEntry4.getName());
+
+		ListTypeDefinition listTypeDefinition3 =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					"TESTLISTTYPEDEFINITION3");
+
+		Assert.assertEquals(
+			"Test List Type Definition 3", listTypeDefinition3.getName());
+
+		ListTypeEntry[] listTypeEntries3 =
+			listTypeDefinition3.getListTypeEntries();
+
+		ListTypeEntry listTypeEntry5 = listTypeEntries3[0];
+
+		Assert.assertEquals("testlisttypeentry5", listTypeEntry5.getKey());
+		Assert.assertEquals("Test List Type Entry 5", listTypeEntry5.getName());
+
+		ListTypeEntry listTypeEntry6 = listTypeEntries3[1];
+
+		Assert.assertEquals("testlisttypeentry6", listTypeEntry6.getKey());
+		Assert.assertEquals("Test List Type Entry 6", listTypeEntry6.getName());
 	}
 
 	private void _assertNotificationTemplate() throws Exception {
@@ -1365,7 +1542,7 @@ public class BundleSiteInitializerTest {
 	private void _assertPermissions() throws Exception {
 		_assertRoles();
 
-		_assertResourcePermission();
+		_assertResourcePermission1();
 	}
 
 	private void _assertPortletSettings() {
@@ -1549,7 +1726,7 @@ public class BundleSiteInitializerTest {
 			resourceActionBitwiseValue, resourcePermission.getActionIds());
 	}
 
-	private void _assertResourcePermission() throws Exception {
+	private void _assertResourcePermission1() throws Exception {
 		Role role = _roleLocalService.fetchRole(
 			_group.getCompanyId(), "Test Role 1");
 
@@ -1592,6 +1769,116 @@ public class BundleSiteInitializerTest {
 
 		_assertResourceAction(
 			new String[] {"DELETE", "UPDATE", "VIEW"}, resourcePermission);
+
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.fetchLayoutPageTemplateEntry(
+				_group.getGroupId(), "Test Display Page Template",
+				LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE);
+
+		role = _roleLocalService.fetchRole(
+			_group.getCompanyId(), "Test Role 4");
+
+		String className =
+			"com.liferay.layout.page.template.model.LayoutPageTemplateEntry";
+
+		resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				_group.getCompanyId(), className,
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(layoutPageTemplateEntry.getPrimaryKey()),
+				role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(
+			new String[] {"UPDATE", "VIEW"}, resourcePermission);
+	}
+
+	private void _assertResourcePermission2() throws Exception {
+		Role role = _roleLocalService.fetchRole(
+			_group.getCompanyId(), "Test Role 1");
+
+		ResourcePermission resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				_group.getCompanyId(), "com.liferay.commerce.product",
+				ResourceConstants.SCOPE_COMPANY,
+				String.valueOf(_group.getCompanyId()), role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(
+			new String[] {"PERMISSIONS", "VIEW_PRICE"}, resourcePermission);
+
+		role = _roleLocalService.fetchRole(
+			_group.getCompanyId(), "Test Role 2");
+
+		resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				_group.getCompanyId(), "com.liferay.commerce.product",
+				ResourceConstants.SCOPE_GROUP,
+				String.valueOf(_group.getGroupId()), role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(new String[] {"VIEW_PRICE"}, resourcePermission);
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				_group.getCompanyId(), "C_TestObjectDefinition3");
+
+		resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				_group.getCompanyId(),
+				"com.liferay.object.model.ObjectDefinition#" +
+					objectDefinition.getObjectDefinitionId(),
+				ResourceConstants.SCOPE_COMPANY,
+				String.valueOf(_group.getCompanyId()), role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+		Assert.assertFalse(resourcePermission.isViewActionId());
+
+		_assertResourceAction(
+			new String[] {"DELETE", "UPDATE"}, resourcePermission);
+
+		role = _roleLocalService.fetchRole(
+			_group.getCompanyId(), "Test Role 4");
+
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.fetchLayoutPageTemplateEntry(
+				_group.getGroupId(), "Test Display Page Template",
+				LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE);
+
+		String className =
+			"com.liferay.layout.page.template.model.LayoutPageTemplateEntry";
+
+		resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				_group.getCompanyId(), className,
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(layoutPageTemplateEntry.getPrimaryKey()),
+				role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(
+			new String[] {"UPDATE", "VIEW"}, resourcePermission);
+
+		layoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.fetchLayoutPageTemplateEntry(
+				_group.getGroupId(), "Test Master Page",
+				LayoutPageTemplateEntryTypeConstants.TYPE_MASTER_LAYOUT);
+
+		resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				_group.getCompanyId(), className,
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(layoutPageTemplateEntry.getPrimaryKey()),
+				role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(
+			new String[] {"UPDATE", "VIEW"}, resourcePermission);
 	}
 
 	private void _assertRoles() {
@@ -2055,7 +2342,7 @@ public class BundleSiteInitializerTest {
 		_assertDDMStructure();
 		_assertDDMTemplate();
 		_assertDLFileEntry();
-		_assertExpandoColumns();
+		_assertExpandoColumns1();
 		_assertFragmentEntries();
 		_assertJournalArticles();
 		_assertKBArticles();
@@ -2063,7 +2350,7 @@ public class BundleSiteInitializerTest {
 		_assertLayoutSets();
 		_assertLayouts();
 		_assertLayoutUtilityPageEntries();
-		_assertListTypeDefinitions();
+		_assertListTypeDefinitions1();
 		_assertNotificationTemplate();
 		_assertObjectDefinitions();
 		_assertOrganizations();
@@ -2084,6 +2371,9 @@ public class BundleSiteInitializerTest {
 		siteInitializer.initialize(_group.getGroupId());
 
 		_assertAccounts2();
+		_assertExpandoColumns2();
+		_assertListTypeDefinitions2();
+		_assertResourcePermission2();
 	}
 
 	@Inject

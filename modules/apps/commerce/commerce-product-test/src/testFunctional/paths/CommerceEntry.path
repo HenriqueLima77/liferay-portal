@@ -346,6 +346,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>OVERRIDE_DEFAULT_DISPLAY_PAGE_SIDE_PANEL_CHOOSE_BUTTON</td>
+	<td>//*[contains(.,'${key_tabName}')]//..//button[contains(.,'Choose')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>CURRENCY_SELECT</td>
 	<td>//div[label[contains(.,'Store Currency')]]/select</td>
 	<td></td>
@@ -612,7 +617,7 @@
 </tr>
 <tr>
 	<td>CHANNELS_GENERAL_TAB_EDITS</td>
-	<td>//div[contains(text(),'${key_entryName}')]/following-sibling::div[contains(@class,'item-actions')]//a</td>
+	<td>//div[contains(text(),'${key_entryName}')]/following-sibling::div[contains(@class,'item-actions')]//*</td>
 	<td></td>
 </tr>
 <tr>
@@ -716,8 +721,13 @@
 	<td></td>
 </tr>
 <tr>
+	<td>TABLE_ENTRY_DELETE_BUTTON</td>
+	<td>//h4[contains(.,'${key_table}')]//..//div/a[contains(.,'${key_entryName}')]//..//..//../div/*[contains(.,'Delete')] | //div[contains(.,'${key_table}')]//div[@class='dnd-tr'][contains(.,'${key_entryName}')]//*[contains(text(),'Delete')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>TABLE_ENTRY_EDIT_BUTTON</td>
-	<td>//h4[contains(.,'${key_table}')]//..//div/a[contains(.,'${key_entryName}')]//..//..//../div/a[contains(.,'Edit')] | //div[contains(.,'${key_table}')]//div[@class='dnd-tr'][contains(.,'${key_entryName}')]//a[contains(text(),'Edit')]</td>
+	<td>//h4[contains(.,'${key_table}')]//..//div/a[contains(.,'${key_entryName}')]//..//..//../div/*[contains(.,'Edit')] | //div[contains(.,'${key_table}')]//div[@class='dnd-tr'][contains(.,'${key_entryName}')]//*[contains(text(),'Edit')]</td>
 	<td></td>
 </tr>
 <tr>

@@ -137,6 +137,19 @@ definition {
 			locator1 = "Picklist#DISABLE_PICKLIST_KEY");
 	}
 
+	macro assertDownloadedPicklist {
+		var downloadedFileName = TestCase.getDownloadedTempFileName(fileNamePattern = ${downloadedFile});
+
+		echo("## downloadedFileName: ListType_*");
+
+		if (contains("ListType_*", ${downloadedFile})) {
+			echo("This is a correct file.");
+		}
+		else {
+			fail("FAIL!");
+		}
+	}
+
 	macro assertEmptyStateMessageDisplayed {
 		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
@@ -305,6 +318,25 @@ definition {
 		MenuItem.clickNoError(menuItem = "View");
 	}
 
+	macro importPicklist {
+		Click(locator1 = "ObjectAdmin#KEBAB_MENU");
+
+		Click(locator1 = "Picklist#IMPORT_PICKLIST");
+
+		var filePath = TestCase.getDependenciesDirPath(fileName = "${picklistFileName}.json");
+
+		UploadFile(
+			locator1 = "TextInput#FILE",
+			value1 = ${filePath});
+
+		Type(
+			key_fieldLabel = "Name",
+			locator1 = "TextInput#GENERIC_TEXT_INPUT",
+			value1 = ${picklistName});
+
+		Button.clickImport();
+	}
+
 	macro optionsPicklist {
 		Click.javaScriptClick(
 			key_picklistName = ${picklistName},
@@ -375,6 +407,12 @@ definition {
 			value1 = ${picklistName});
 
 		WaitForSPARefresh();
+	}
+
+	macro viewPicklist {
+		Click(
+			key_picklistName = ${picklistName},
+			locator1 = "Picklist#VIEW_PICKLIST");
 	}
 
 }

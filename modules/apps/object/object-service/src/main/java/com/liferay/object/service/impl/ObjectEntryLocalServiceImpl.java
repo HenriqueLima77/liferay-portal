@@ -651,8 +651,7 @@ public class ObjectEntryLocalServiceImpl
 
 	@Override
 	public List<ObjectEntry> getObjectEntries(
-			long groupId, long objectDefinitionId, int start, int end)
-		throws PortalException {
+		long groupId, long objectDefinitionId, int start, int end) {
 
 		return objectEntryPersistence.findByG_ODI(
 			groupId, objectDefinitionId, start, end);
@@ -660,9 +659,7 @@ public class ObjectEntryLocalServiceImpl
 
 	@Override
 	public List<ObjectEntry> getObjectEntries(
-			long groupId, long objectDefinitionId, int status, int start,
-			int end)
-		throws PortalException {
+		long groupId, long objectDefinitionId, int status, int start, int end) {
 
 		return objectEntryPersistence.findByG_ODI_S(
 			groupId, objectDefinitionId, status, start, end);
@@ -1309,7 +1306,7 @@ public class ObjectEntryLocalServiceImpl
 				}
 			}
 
-			if (Objects.equals("documentsAndMedia", fileSource)) {
+			if (Objects.equals(fileSource, "documentsAndMedia")) {
 				return;
 			}
 
@@ -2157,15 +2154,9 @@ public class ObjectEntryLocalServiceImpl
 					return column.eq(related ? primaryKey : 0L);
 				}
 			).and(
-				() -> {
-					if (objectRelationship.getObjectDefinitionId1() ==
-							objectRelationship.getObjectDefinitionId2()) {
-
-						return primaryKeyColumn.neq(primaryKey);
-					}
-
-					return null;
-				}
+				() ->
+					objectRelationship.isSelf() ?
+						primaryKeyColumn.neq(primaryKey) : null
 			).and(
 				() -> {
 					if (PermissionThreadLocal.getPermissionChecker() == null) {
@@ -2491,9 +2482,14 @@ public class ObjectEntryLocalServiceImpl
 
 				ddmExpression.setVariables(columns);
 
-				Expression<?> expression = ddmExpression.getDSLExpression();
+				try {
+					Expression<?> expression = ddmExpression.getDSLExpression();
 
-				selectExpressions.add(expression.as(objectField.getName()));
+					selectExpressions.add(expression.as(objectField.getName()));
+				}
+				catch (Exception exception) {
+					_log.error(exception);
+				}
 			}
 		}
 

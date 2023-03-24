@@ -812,6 +812,10 @@
 			<description name="Finds cases where the service builder indexes are updated manually in Upgrade classes. This is not needed because Liferay takes care of it." />
 			<property name="enabled" value="false" />
 		</check>
+		<check name="JavaUpgradeProcessFactoryCheck">
+			<category name="Styling" />
+			<description name="Sorts and groups method calls." />
+		</check>
 		<check name="JavaUpgradeVersionCheck">
 			<category name="Bug Prevention" />
 			<description name="Verifies that the correct upgrade versions are used in classes that implement `UpgradeStepRegistrator`." />
@@ -1522,6 +1526,16 @@
 		</check>
 	</source-processor>
 	<source-processor name="UpgradeSourceProcessor">
+		<check name="UpgradeBNDIncludeResourceCheck">
+			<category name="Upgrade" />
+			<description name="Checks if the property value `-includeresource` or `Include-Resource` exists and removes it" />
+			<weight>1</weight>
+		</check>
+		<check name="UpgradeGradleIncludeResourceCheck">
+			<category name="Upgrade" />
+			<description name="Replaces with `compileInclude` the configuration attribute for dependencies in `build.gradle` that are listed at `Include-Resource` property at `bnd.bnd` associated file." />
+			<weight>2</weight>
+		</check>
 		<check name="UpgradeJavaCheck">
 			<category name="Upgrade" />
 			<description name="Performs upgrade checks for `java` files" />

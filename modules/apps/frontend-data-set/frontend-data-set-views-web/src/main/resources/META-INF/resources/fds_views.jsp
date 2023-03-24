@@ -22,3 +22,22 @@ portletDisplay.setURLBack(fdsViewsDisplayContext.getFDSEntriesURL());
 
 renderResponse.setTitle(ParamUtil.getString(request, "fdsEntryLabel"));
 %>
+
+<react:component
+	module="js/FDSViews"
+	props='<%=
+		HashMapBuilder.<String, Object>put(
+			"fdsEntriesAPIURL", fdsViewsDisplayContext.getFDSEntriesAPIURL()
+		).put(
+			"fdsEntryId", ParamUtil.getString(request, "fdsEntryId")
+		).put(
+			"fdsEntryLabel", ParamUtil.getString(request, "fdsEntryLabel")
+		).put(
+			"fdsViewsAPIURL", fdsViewsDisplayContext.getFDSViewsAPIURL()
+		).put(
+			"fdsViewURL", fdsViewsDisplayContext.getFDSViewURL()
+		).put(
+			"namespace", liferayPortletResponse.getNamespace()
+		).build()
+	%>'
+/>

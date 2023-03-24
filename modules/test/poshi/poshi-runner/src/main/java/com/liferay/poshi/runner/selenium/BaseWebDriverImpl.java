@@ -50,10 +50,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.StringReader;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-
 import java.nio.file.Paths;
 
 import java.util.ArrayList;
@@ -1031,7 +1027,13 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 	@Override
 	public void get(String url) {
-		_webDriver.get(url);
+		try {
+			_webDriver.get(url);
+		}
+		catch (Throwable throwable) {
+			throw new WebDriverException(
+				"Invalid URL: " + url, throwable.getCause());
+		}
 	}
 
 	@Override
@@ -1224,6 +1226,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		return attributeNode.getTextContent();
 	}
 
+	@Override
 	public String getHtmlNodeText(String locator) throws Exception {
 		Node node = getHtmlNode(locator);
 
@@ -2134,12 +2137,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 			targetURL = PropsValues.PORTAL_URL + targetURL;
 		}
 
-		if (_isValidURL(targetURL)) {
-			get(targetURL);
-		}
-		else {
-			throw new IllegalArgumentException("Invalid URL: " + targetURL);
-		}
+		get(targetURL);
 	}
 
 	@Override
@@ -4543,19 +4541,6 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 	}
 
-	private boolean _isValidURL(String targetURL) {
-		try {
-			URL url = new URL(targetURL);
-
-			url.toURI();
-
-			return true;
-		}
-		catch (MalformedURLException | URISyntaxException exception) {
-			return false;
-		}
-	}
-
 	private static final String _OCULAR_BASELINE_IMAGE_DIR_NAME;
 
 	private static final String _OCULAR_RESULT_IMAGE_DIR_NAME;
@@ -4585,7 +4570,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		new Hashtable<String, Keys>() {
 			{
 				for (Keys keys : Keys.class.getEnumConstants()) {
-					_keysMap.put(keys.name(), keys);
+					put(keys.name(), keys);
 				}
 
 				put("CTRL", Keys.CONTROL);

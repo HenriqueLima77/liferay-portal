@@ -144,7 +144,7 @@ export default class SearchBuilder {
 			) as RendererFields;
 
 			const removeQuoteMark =
-				schema.removeQuoteMark || schema.type === 'number';
+				schema?.removeQuoteMark || schema?.type === 'number';
 
 			const customOperator = schema?.operator;
 

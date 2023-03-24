@@ -273,6 +273,7 @@ JavaUpgradeConnectionCheck | [Bug Prevention](bug_prevention_checks.markdown#bug
 [JavaUpgradeDropTableCheck](check/java_upgrade_drop_table_check.markdown#javaupgradedroptablecheck) | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Finds cases where `DROP_TABLE_IF_EXISTS` should be used (instead of `drop table if exists`). |
 JavaUpgradeEmptyLinesCheck | [Styling](styling_checks.markdown#styling-checks) | .java | Finds missing and unnecessary empty lines in Upgrade classes. |
 [JavaUpgradeIndexCheck](check/java_upgrade_index_check.markdown#javaupgradeindexcheck) | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Finds cases where the service builder indexes are updated manually in Upgrade classes. This is not needed because Liferay takes care of it. |
+JavaUpgradeProcessFactoryCheck | [Styling](styling_checks.markdown#styling-checks) | .java | Sorts and groups method calls. |
 JavaUpgradeVersionCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Verifies that the correct upgrade versions are used in classes that implement `UpgradeStepRegistrator`. |
 JavaVariableTypeCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Performs several checks on the modifiers on variables. |
 JavaVerifyUpgradeConnectionCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Finds cases where `DataAccess.getConnection` is used (instead of using the available global variable `connection`). |
@@ -436,8 +437,10 @@ UnusedMethodCheck | [Performance](performance_checks.markdown#performance-checks
 UnusedParameterCheck | [Performance](performance_checks.markdown#performance-checks) | .java | Finds parameters in private methods that are not used. |
 UnusedVariableCheck | [Performance](performance_checks.markdown#performance-checks) | .java | Finds variables that are declared, but not used. |
 UnwrappedVariableInfoCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Finds cases where the variable should be wrapped into an inner class in order to defer array elements initialization. |
+UpgradeBNDIncludeResourceCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .bnd, .gradle or .java | Checks if the property value `-includeresource` or `Include-Resource` exists and removes it |
 UpgradeDeprecatedAPICheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .java | Finds calls to deprecated classes, constructors, fields or methods after an upgrade |
-UpgradeJavaCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .java | Performs upgrade checks for `java` files |
+UpgradeGradleIncludeResourceCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .bnd, .gradle or .java | Replaces with `compileInclude` the configuration attribute for dependencies in `build.gradle` that are listed at `Include-Resource` property at `bnd.bnd` associated file. |
+UpgradeJavaCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .bnd, .gradle or .java | Performs upgrade checks for `java` files |
 [UpgradeProcessCheck](check/upgrade_process_check.markdown#upgradeprocesscheck) | [Performance](performance_checks.markdown#performance-checks) | .java | Performs several checks on `*UpgradeProcess` classes. |
 UpgradeRemovedAPICheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .java | Finds cases where calls are made to removed API after an upgrade. |
 [ValidatorEqualsCheck](check/validator_equals_check.markdown#validatorequalscheck) | [Performance](performance_checks.markdown#performance-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl or .vm | Checks that there are no calls to `Validator.equals(Object, Object)`. |

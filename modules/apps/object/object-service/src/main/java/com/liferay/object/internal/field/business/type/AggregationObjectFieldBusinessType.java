@@ -57,9 +57,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = "object.field.business.type.key=" + ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION,
-	service = {
-		AggregationObjectFieldBusinessType.class, ObjectFieldBusinessType.class
-	}
+	service = ObjectFieldBusinessType.class
 )
 public class AggregationObjectFieldBusinessType
 	implements ObjectFieldBusinessType {
@@ -135,7 +133,7 @@ public class AggregationObjectFieldBusinessType
 		for (ObjectFieldSetting objectFieldSetting : objectFieldSettings) {
 			String name = objectFieldSetting.getName();
 
-			if (Objects.equals("filters", name)) {
+			if (Objects.equals(name, "filters")) {
 				objectFieldSettingsValuesMap.put(
 					name, objectFieldSetting.getObjectFilters());
 

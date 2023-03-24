@@ -15,6 +15,10 @@ definition {
 			User.firstLoginPG();
 		}
 
+		task ("Create a new Partner Portal Site") {
+			PRMUtils.addPRMSite();
+		}
+
 		task ("Add a partner user") {
 			JSONUser.addUser(
 				userEmailAddress = "partner@liferay.com",
@@ -52,8 +56,8 @@ definition {
 				userEmailAddress = "partner@liferay.com");
 		}
 
-		task ("Create a new Partner Portal Site") {
-			PRMUtils.addPRMSite();
+		task ("Add a currency to the created account") {
+			JSONPRM.addCurrency();
 		}
 
 		task ("Go to Partner Portal and login with the created user") {
@@ -76,6 +80,10 @@ definition {
 			PortalInstances.tearDownCP();
 		}
 		else {
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "test@liferay.com",
+				userLoginFullName = "Test Test");
+
 			JSONGroup.deleteGroupByName(groupName = "Partner Portal");
 
 			Account.tearDownCP();
@@ -217,6 +225,56 @@ definition {
 		task ("Then the information of the visible MDF's will be inside the exported file") {
 			PRMMDFRequest.viewExportedMDF(
 				fileContentList = "Campaign Name 1,Campaign Name 2,Campaign Name 3",
+				fileName = "MDF Requests.csv");
+		}
+	}
+
+	@description = "This is a test for LPS-173731. Verify that is possible to export a searched MDF"
+	@priority = 4
+	test CanExportSearchedMDFs {
+		task ("Given I add two different MDF's") {
+			JSONPRM.createMDFRequest(
+				accountEntryName = "Company Name 1",
+				campaignName = "Campaign Name 1");
+
+			JSONPRM.createMDFRequest(
+				accountEntryName = "Company Name 1",
+				campaignName = "Campaign Name 2");
+		}
+
+		task ("And I go to MDF Listing Page") {
+			PRMUtils.gotoPRM();
+
+			PRMHomePage.gotoQuickLinksOption(
+				buttonLink = "mdf",
+				buttonText = "MDF");
+		}
+
+		task ("When I search for the first MDF") {
+			PRMMDFRequest.SearchMDF(key_value = "Campaign Name 1");
+		}
+
+		task ("And when I export the search results") {
+			Button.click(button = "Export MDF Report");
+		}
+
+		task ("Then I check if the exported file contains the information about the searched MDF") {
+			PRMMDFRequest.viewExportedMDF(
+				fileContentList = "Campaign Name 1",
+				fileName = "MDF Requests.csv");
+		}
+
+		task ("When I search for the second MDF") {
+			PRMMDFRequest.SearchMDF(key_value = "Campaign Name 2");
+		}
+
+		task ("And when I export the search results") {
+			Button.click(button = "Export MDF Report");
+		}
+
+		task ("Then I check if the exported file contains the information about the searched MDF") {
+			PRMMDFRequest.viewExportedMDF(
+				fileContentList = "Campaign Name 2",
 				fileName = "MDF Requests.csv");
 		}
 	}
@@ -527,11 +585,47 @@ definition {
 		}
 
 		task ("And the Manager can change the MDF Status") {
-			PRMMDFRequest.changeMDFStatus(
-				campaignName = "Campaign Name",
-				key_statusButton = "Approve");
+			PRMMDFRequest.changeMDFStatus(statusButton = "Approve");
 
 			PRMMDFRequest.viewMDFStatus(key_status = "Approved");
+		}
+	}
+
+	@description = "This is for LPS-172427. Verify that the value of Total MDF Requested Amount* will be according to the Total cost and Claim percent"
+	@priority = 5
+	test RequestedValueIsEqualsTo50PercentOfTotalCost {
+		task ("Given a new MDF request") {
+			PRMMarketing.gotoAddNewMDF();
+
+			PRMMDFRequest.fillGoalsPage(
+				accountName = "Company Name 1",
+				campaignDescription = "Campaign Description",
+				campaignName = "Campaign Name",
+				countryName = "Global",
+				goalsOptions = "Lead generation",
+				targetMarketOptions = "Education,Energy",
+				targetRolesOptions = "Administrator");
+
+			Button.click(button = "Continue");
+		}
+
+		task ("When a new activity is added") {
+			PRMMDFRequest.addNewActivity();
+		}
+
+		task ("And when a new expense is added to the activity") {
+			var budgetValue = 5000;
+
+			PRMMDFRequest.fillExpenseFields(budgetList = "Sponsorship Fee-${budgetValue}");
+		}
+
+		task ("Then the 'Total MDF Requested Amount' value is equals to 50% of the budget value") {
+			var requestedAmound = ${budgetValue} / 2;
+			var actualValue = PRMMDFRequest.getRequestedAmoundValue();
+
+			TestUtils.assertPartialEquals(
+				actual = ${actualValue},
+				expected = ${requestedAmound});
 		}
 	}
 
@@ -687,31 +781,11 @@ definition {
 	@description = "This is a test for LPS-169960. Verify that a submited MDF will be displayed on the list"
 	@priority = 5
 	test SubmittedMDFAppearsOnListing {
-		task ("Given I go to add a new MDF Request") {
-			PRMMarketing.gotoAddNewMDF();
+		task ("Given that a new MDF Request is submitted") {
+			JSONPRM.createMDFRequest();
 		}
 
-		task ("Given that a partner submit a new MDF Request") {
-			PRMMDFRequest.createNewRequest(
-				accountName = "Company Name 1",
-				activityDescription = "Activity Description",
-				activityName = "Activity Name 1",
-				budgetList = "Sponsorship Fee-2000",
-				campaignDescription = "Campaign Description",
-				campaignName = "Campaign Name",
-				countryName = "Global",
-				followUpStrategy = "test",
-				goalsOptions = "Lead generation",
-				leadFollowUpList = "Other",
-				leadList = "No",
-				tactic = "Other",
-				targetMarketOptions = "Education,Energy",
-				targetOfLeads = "test",
-				targetRolesOptions = "Administrator",
-				typeOfActivity = "Miscellaneous Marketing");
-		}
-
-		task ("Then the MDF status appears on list") {
+		task ("Then the MDF appears on listing page") {
 			PRMMDFListing.viewOnList(campaignName = "Campaign Name");
 		}
 	}
@@ -757,13 +831,58 @@ definition {
 
 			PRMMDFRequest.goToMDF(campaignName = "Campaign Name");
 
-			PRMMDFRequest.changeMDFStatus(
-				campaignName = "Campaign Name",
-				key_statusButton = "Approve");
+			PRMMDFRequest.changeMDFStatus(statusButton = "Approve");
 		}
 
 		task ("Then I can see the message 'You can submit up to 2 claim(s)'") {
 			PRMMDFRequest.assertClaimMessage(key_claimMessage = "You can submit up to 2 claim(s).");
+		}
+	}
+
+	@description = "This is a test for LPS-174284. Verify that If just one claim was made, so the message 'You can submit up to 1 claim' appears"
+	@priority = 5
+	test VerifyMessageWhenOneClaimWasMade {
+		task ("Given that a partner submit a new MDF Request") {
+			JSONPRM.createMDFRequest();
+		}
+
+		task ("When a manager approves the submitted MDF") {
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "manager@liferay.com",
+				userLoginFullName = "manager");
+
+			PRMUtils.gotoPRM();
+
+			PRMHomePage.gotoQuickLinksOption(
+				buttonLink = "mdf-requests",
+				buttonText = "MDF");
+
+			PRMMDFRequest.goToMDF(campaignName = "Campaign Name");
+
+			PRMMDFRequest.changeMDFStatus(key_statusButton = "Approve");
+		}
+
+		task ("And a partner makes a claim") {
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "partner@liferay.com",
+				userLoginFullName = "partner");
+
+			PRMUtils.gotoPRM();
+
+			PRMHomePage.gotoQuickLinksOption(
+				buttonLink = "mdf-requests",
+				buttonText = "MDF");
+
+			PRMMDFRequest.goToMDF(campaignName = "Campaign Name");
+
+			PRMMDFClaim.createNewClaim(
+				listLeads = "Document_1.xlsx",
+				reimbursementInvoice = "Document_1.png",
+				thirdInvoice = "Document_1.png");
+		}
+
+		task ("Then I can see the message") {
+			PRMMDFRequest.assertClaimMessage(claimMessage = "You can submit up to 1 claim(s).");
 		}
 	}
 

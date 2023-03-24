@@ -13,7 +13,7 @@ definition {
 		}
 
 		task ("Add a site via JSON") {
-			JSONGroup.addGroup(groupName = "Test Site Name");
+			HeadlessSite.addSite(siteName = "Test Site Name");
 		}
 	}
 
@@ -59,19 +59,7 @@ definition {
 		}
 
 		task ("Then the guest should see not found") {
-			var projectDir = PropsUtil.get("project.dir");
-
-			var fileContent = FileUtil.read("${projectDir}/portal-impl/src/portal.properties");
-
-			if (contains(${fileContent}, "feature.flag.LPS-162765")) {
-				Alert.viewErrorMessage(errorMessage = "Your request failed to complete.");
-			}
-			else {
-				ContentPages.viewFragmentText(
-					fragmentName = "heading",
-					id = "element-text",
-					text = 404);
-			}
+			Alert.viewErrorMessage(errorMessage = "Your request failed to complete.");
 		}
 	}
 

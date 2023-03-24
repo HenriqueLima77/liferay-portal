@@ -46,7 +46,7 @@ import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortlet
 import com.liferay.layout.content.page.editor.sidebar.panel.ContentPageEditorSidebarPanel;
 import com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration;
 import com.liferay.layout.content.page.editor.web.internal.constants.ContentPageEditorActionKeys;
-import com.liferay.layout.content.page.editor.web.internal.util.ContentUtil;
+import com.liferay.layout.content.page.editor.web.internal.util.ContentManager;
 import com.liferay.layout.content.page.editor.web.internal.util.FragmentCollectionManager;
 import com.liferay.layout.content.page.editor.web.internal.util.FragmentEntryLinkManager;
 import com.liferay.layout.content.page.editor.web.internal.util.MappingContentUtil;
@@ -165,6 +165,7 @@ public class ContentPageEditorDisplayContext {
 
 	public ContentPageEditorDisplayContext(
 		List<ContentPageEditorSidebarPanel> contentPageEditorSidebarPanels,
+		ContentManager contentManager,
 		FragmentCollectionManager fragmentCollectionManager,
 		FragmentEntryLinkManager fragmentEntryLinkManager,
 		FragmentEntryLinkLocalService fragmentEntryLinkLocalService,
@@ -192,6 +193,7 @@ public class ContentPageEditorDisplayContext {
 		WorkflowDefinitionLinkLocalService workflowDefinitionLinkLocalService) {
 
 		_contentPageEditorSidebarPanels = contentPageEditorSidebarPanels;
+		_contentManager = contentManager;
 		_fragmentCollectionManager = fragmentCollectionManager;
 		_fragmentEntryLinkManager = fragmentEntryLinkManager;
 		_fragmentEntryLinkLocalService = fragmentEntryLinkLocalService;
@@ -621,6 +623,8 @@ public class ContentPageEditorDisplayContext {
 					"/layout_content_page_editor" +
 						"/restore_collection_display_config")
 			).put(
+				"restrictedItemIds", _getRestrictedItemIds()
+			).put(
 				"saveVariantSegmentsExperienceURL",
 				getSaveVariantSegmentsExperienceURL()
 			).put(
@@ -751,10 +755,11 @@ public class ContentPageEditorDisplayContext {
 				"masterLayout", _getMasterLayoutJSONObject()
 			).put(
 				"pageContents",
-				ContentUtil.getPageContentsJSONArray(
+				_contentManager.getPageContentsJSONArray(
 					httpServletRequest,
 					portal.getHttpServletResponse(renderResponse),
-					themeDisplay.getPlid(), getSegmentsExperienceId())
+					themeDisplay.getPlid(), _getRestrictedItemIds(),
+					getSegmentsExperienceId())
 			).put(
 				"permissions",
 				() -> {
@@ -1509,14 +1514,14 @@ public class ContentPageEditorDisplayContext {
 
 		Set<LayoutDisplayPageObjectProvider<?>>
 			layoutDisplayPageObjectProviders =
-				ContentUtil.getMappedLayoutDisplayPageObjectProviders(
+				_contentManager.getMappedLayoutDisplayPageObjectProviders(
 					getGroupId(), themeDisplay.getPlid());
 
 		Layout layout = themeDisplay.getLayout();
 
 		if (layout.getMasterLayoutPlid() > 0) {
 			layoutDisplayPageObjectProviders.addAll(
-				ContentUtil.getMappedLayoutDisplayPageObjectProviders(
+				_contentManager.getMappedLayoutDisplayPageObjectProviders(
 					getGroupId(), layout.getMasterLayoutPlid()));
 		}
 
@@ -1718,6 +1723,17 @@ public class ContentPageEditorDisplayContext {
 			resourceURL.toString(), "p_l_mode", Constants.EDIT);
 	}
 
+	private List<String> _getRestrictedItemIds() throws Exception {
+		if (_restrictedItemIds != null) {
+			return _restrictedItemIds;
+		}
+
+		_restrictedItemIds = _contentManager.getRestrictedItemIds(
+			_getLayoutStructure(), themeDisplay);
+
+		return _restrictedItemIds;
+	}
+
 	private String _getSegmentsCompanyConfigurationURL() {
 		try {
 			return _segmentsConfigurationProvider.getCompanyConfigurationURL(
@@ -1901,6 +1917,7 @@ public class ContentPageEditorDisplayContext {
 	private static final Log _log = LogFactoryUtil.getLog(
 		ContentPageEditorDisplayContext.class);
 
+	private final ContentManager _contentManager;
 	private final List<ContentPageEditorSidebarPanel>
 		_contentPageEditorSidebarPanels;
 	private Map<String, Object> _defaultConfigurations;
@@ -1929,6 +1946,7 @@ public class ContentPageEditorDisplayContext {
 	private final PortletURLFactory _portletURLFactory;
 	private Layout _publishedLayout;
 	private String _redirect;
+	private List<String> _restrictedItemIds;
 	private final SegmentsConfigurationProvider _segmentsConfigurationProvider;
 	private Long _segmentsExperienceId;
 	private final SegmentsExperienceManager _segmentsExperienceManager;

@@ -15,6 +15,7 @@
 package com.liferay.jenkins.plugin.events;
 
 import com.liferay.jenkins.plugin.events.publisher.JenkinsPublisher;
+import com.liferay.jenkins.plugin.events.publisher.JenkinsPublisherUtil;
 
 import hudson.Extension;
 
@@ -38,6 +39,12 @@ public class JenkinsEventsDescriptor
 		jenkinsPublishers = new ArrayList<>();
 
 		load();
+
+		for (JenkinsPublisher jenkinsPublisher : jenkinsPublishers) {
+			jenkinsPublisher.subscribe();
+		}
+
+		JenkinsPublisherUtil.setJenkinsEventsDescriptor(this);
 	}
 
 	@Override

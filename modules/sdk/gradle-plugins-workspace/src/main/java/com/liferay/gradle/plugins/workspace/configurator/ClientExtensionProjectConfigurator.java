@@ -170,14 +170,14 @@ public class ClientExtensionProjectConfigurator
 				entry -> {
 					String id = entry.getKey();
 
-					if (Objects.equals("assemble", id)) {
+					if (Objects.equals(id, "assemble")) {
 						JsonNode assembleJsonNode = entry.getValue();
 
 						_configureAssembleClientExtensionTask(
 							project, assembleClientExtensionTaskProvider,
 							assembleJsonNode);
 					}
-					else if (Objects.equals("runtime", id)) {
+					else if (Objects.equals(id, "runtime")) {
 						JsonNode runtimeJsonNode = entry.getValue();
 
 						JsonNode runtimeTypeJsonNode = runtimeJsonNode.get(
@@ -258,11 +258,7 @@ public class ClientExtensionProjectConfigurator
 				ioException);
 		}
 
-		File dockerFile = project.file("Dockerfile");
-
-		if (dockerFile.exists()) {
-			_addDockerTasks(project, assembleClientExtensionTaskProvider);
-		}
+		_addDockerTasks(project, assembleClientExtensionTaskProvider);
 	}
 
 	@Override
@@ -472,6 +468,9 @@ public class ClientExtensionProjectConfigurator
 							else {
 								if (includeJsonNode != null) {
 									copySpec.include(includeJsonNode.asText());
+								}
+								else {
+									copySpec.include("**/*");
 								}
 							}
 

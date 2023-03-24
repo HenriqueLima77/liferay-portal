@@ -42,7 +42,7 @@
 </tr>
 <tr>
 	<td>CLAIM_MESSAGE</td>
-	<td>//div[contains(@class,'claims-list')]//h6[contains(.,'${key_claimMessage}')]</td>
+	<td>//div[contains(@class,'claims-list')]//h6[contains(normalize-space(),'${key_claimMessage}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -73,6 +73,11 @@
 <tr>
 	<td>STATUS_INFO</td>
 	<td>//div[contains(@class,'mdf-request-manager-status')]//p[contains(text(), '${key_value}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>REQUESTED_AMOUT_FIELD</td>
+	<td>//div[contains(@class,'total-mdf-request-amount')]</td>
 	<td></td>
 </tr>
 </tbody>

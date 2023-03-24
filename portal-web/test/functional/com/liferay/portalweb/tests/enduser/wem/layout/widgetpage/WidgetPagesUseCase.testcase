@@ -13,7 +13,7 @@ definition {
 		}
 
 		task ("Add a site") {
-			JSONGroup.addGroup(groupName = "Test Site Name");
+			HeadlessSite.addSite(siteName = "Test Site Name");
 		}
 	}
 
@@ -208,11 +208,10 @@ definition {
 	@priority = 4
 	test EditFriendlyURLOfPageSet {
 		task ("Given a page admin has a page set with child pages") {
-			Site.openSitesAdmin();
-
-			Site.addCustomCP(
+			HeadlessSite.addSite(
 				siteName = "Site Name",
-				siteTemplateName = "Welcome");
+				templateName = "Welcome",
+				templateType = "Site Initializer");
 
 			PagesAdmin.openPagesAdmin(siteURLKey = "site-name");
 
@@ -307,19 +306,10 @@ definition {
 		}
 
 		task ("Then the page admin is redirected to not found") {
-			var projectDir = PropsUtil.get("project.dir");
-
-			var fileContent = FileUtil.read("${projectDir}/portal-impl/src/portal.properties");
-
-			if (contains(${fileContent}, "feature.flag.LPS-162765")) {
-				AssertTextPresent(value1 = "The requested resource could not be found.");
-			}
-			else {
-				ContentPages.viewFragmentText(
-					fragmentName = "paragraph",
-					id = "element-text",
-					text = "Page Not Found");
-			}
+			ContentPages.viewFragmentText(
+				fragmentName = "paragraph",
+				id = "element-text",
+				text = "Page Not Found");
 		}
 
 		task ("When the page admin navigates to the Pages admin") {
@@ -341,19 +331,10 @@ definition {
 		}
 
 		task ("Then the page admin is redirected to not found") {
-			var projectDir = PropsUtil.get("project.dir");
-
-			var fileContent = FileUtil.read("${projectDir}/portal-impl/src/portal.properties");
-
-			if (contains(${fileContent}, "feature.flag.LPS-162765")) {
-				AssertTextPresent(value1 = "The requested resource could not be found.");
-			}
-			else {
-				ContentPages.viewFragmentText(
-					fragmentName = "paragraph",
-					id = "element-text",
-					text = "Page Not Found");
-			}
+			ContentPages.viewFragmentText(
+				fragmentName = "paragraph",
+				id = "element-text",
+				text = "Page Not Found");
 
 			JSONGroup.deleteGroupByName(groupName = "Site Name");
 		}

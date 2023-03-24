@@ -634,8 +634,6 @@ definition {
 
 	@priority = 4
 	test AddWikiPageAsSiteUser {
-		property portal.upstream = "quarantine";
-
 		var siteName = TestCase.getSiteName(siteName = ${siteName});
 
 		Navigator.openURL();
@@ -800,8 +798,7 @@ definition {
 
 	@priority = 5
 	test UnpublishAndDeleteUploadedDefinition {
-		property portal.acceptance = "quarantine";
-		property portal.upstream = "quarantine";
+		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "WorkflowUsecase#UnpublishAndDeleteUploadedDefinition";
 
 		ApplicationsMenu.gotoPortlet(
@@ -814,6 +811,8 @@ definition {
 		ProcessBuilderKaleoDesignerReact.uploadDefinition(workflowDefinitionFile = "1-workflow-definition.xml");
 
 		ProcessBuilderKaleoDesignerReact.diagramSourceSwitchView();
+
+		Button.clickSave();
 
 		Button.clickPublish();
 

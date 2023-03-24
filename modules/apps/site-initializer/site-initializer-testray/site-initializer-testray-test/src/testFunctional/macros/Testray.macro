@@ -225,7 +225,7 @@ definition {
 			numberItems = 20,
 			valuePagination = 150);
 
-		TestrayContextMenu.clickContextMenuProjects(name = ${nameProject});
+		TestrayContextMenu.clickContextMenuProjects(name = ${projectName});
 
 		TestrayContextMenu.selectItemFromProjectsContextMenu(item = "Delete");
 	}
@@ -299,6 +299,18 @@ definition {
 			locator1 = "Testray#PROJECT_NAVIGATOR_TAB_BUTTON");
 	}
 
+	macro selectUsers {
+		Button.click(button = "Assign Users");
+
+		for (var userName : list ${listUserName}) {
+			Click.clickAtNotVisible(
+				key_checkboxOption = ${userName},
+				locator1 = "Checkbox#SPECIFIC_CHECKBOX_IN_TABLE");
+		}
+
+		Button.click(button = "Select Users");
+	}
+
 	macro signOutTestray {
 		Click(locator1 = "TestrayUser#USER_ICON_SIDEBAR");
 
@@ -348,6 +360,12 @@ definition {
 			value1 = ${description});
 
 		Click(locator1 = "TestrayManage#SAVE_BUTTON");
+	}
+
+	macro viewAlert {
+		var key_alertText = ${alertText};
+
+		AssertVisible(locator1 = "CustomerPortalSite#ALERT_NOTIFICATIONS");
 	}
 
 	macro viewErrorMessage {

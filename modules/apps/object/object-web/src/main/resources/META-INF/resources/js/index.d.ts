@@ -123,10 +123,12 @@ interface ObjectDefinition {
 	defaultLanguageId: Liferay.Language.Locale;
 	enableCategorization: boolean;
 	enableComments: boolean;
+	enableLocalization: boolean;
 	enableObjectEntryHistory: boolean;
 	externalReferenceCode: string;
 	id: number;
 	label: LocalizedValue<string>;
+	modifiable: boolean;
 	name: string;
 	objectActions: [];
 	objectFields: ObjectField[];
@@ -276,7 +278,7 @@ interface ObjectRelationship {
 	type: ObjectRelationshipType;
 }
 
-interface ObjectDefinitionsRelationship {
+interface AddObjectEntryDefinitions {
 	externalReferenceCode: string;
 	id: number;
 	label: string;
@@ -342,7 +344,7 @@ interface NameValueObject {
 	value: string;
 }
 
-interface ObjectDefinitionsRelationship {
+interface AddObjectEntryDefinitions {
 	id: number;
 	label: string;
 	related?: boolean;

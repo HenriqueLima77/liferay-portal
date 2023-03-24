@@ -14,14 +14,15 @@
 
 package com.liferay.jethr0.dalo;
 
-import com.liferay.jethr0.project.DefaultProject;
 import com.liferay.jethr0.project.Project;
+import com.liferay.jethr0.project.ProjectFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONObject;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -51,7 +52,7 @@ public class ProjectDALO extends BaseDALO {
 			throw new RuntimeException("No response");
 		}
 
-		return _newProject(responseJSONObject);
+		return ProjectFactory.newProject(responseJSONObject);
 	}
 
 	public void deleteProject(Project project) {
@@ -60,28 +61,52 @@ public class ProjectDALO extends BaseDALO {
 		}
 
 		delete(project.getId());
+
+		ProjectFactory.removeProject(project);
 	}
 
 	public List<Project> retrieveProjects() {
 		List<Project> projects = new ArrayList<>();
 
-		for (JSONObject responseJSONObject : retrieve()) {
-			projects.add(_newProject(responseJSONObject));
+		for (JSONObject jsonObject : retrieve()) {
+			Project project = ProjectFactory.newProject(jsonObject);
+
+			project.addGitBranches(
+				_projectsToGitBranchesDALO.retrieveGitBranches(project));
+			project.addTestSuites(
+				_projectsToTestSuitesDALO.retrieveTestSuites(project));
+
+			projects.add(project);
 		}
 
 		return projects;
 	}
 
 	public Project updateProject(Project project) {
-		return _newProject(project.getJSONObject());
+		_projectToBuildsDALO.updateRelationships(project);
+		_projectsToGitBranchesDALO.updateRelationships(project);
+		_projectsToTestSuitesDALO.updateRelationships(project);
+
+		JSONObject responseJSONObject = update(project.getJSONObject());
+
+		if (responseJSONObject == null) {
+			throw new RuntimeException("No response");
+		}
+
+		return project;
 	}
 
-	protected String getObjectDefinitionName() {
+	protected String getObjectDefinitionLabel() {
 		return "Project";
 	}
 
-	private Project _newProject(JSONObject jsonObject) {
-		return new DefaultProject(jsonObject);
-	}
+	@Autowired
+	private ProjectsToGitBranchesDALO _projectsToGitBranchesDALO;
+
+	@Autowired
+	private ProjectsToTestSuitesDALO _projectsToTestSuitesDALO;
+
+	@Autowired
+	private ProjectToBuildsDALO _projectToBuildsDALO;
 
 }
