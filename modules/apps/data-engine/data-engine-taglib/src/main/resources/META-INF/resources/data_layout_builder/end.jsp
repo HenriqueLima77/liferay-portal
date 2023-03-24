@@ -52,6 +52,8 @@
 
 	<liferay-ui:error exception="<%= DataDefinitionValidationException.MustSetValidName.class %>" message="please-enter-a-valid-name" />
 
+	<liferay-ui:error exception="<%= DataDefinitionValidationException.MustSetFieldReference.class %>" message="Invalid characters were defined for field" />
+
 	<liferay-ui:error exception="<%= DataLayoutValidationException.class %>" message="please-enter-a-valid-form-layout" />
 
 	<liferay-ui:error exception="<%= DataLayoutValidationException.MustNotDuplicateFieldName.class %>">
