@@ -1,7 +1,47 @@
 {
 	"general": {
+		"de": {
+			"message": "Mehr dazu hier.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
 		"en_US": {
 			"message": "Learn more.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"es": {
+			"message": "Leer más.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"eu": {
+			"message": "Irakurri gehiago.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"fi": {
+			"message": "Lue lisää.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"hu": {
+			"message": "Bővebben.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"ja": {
+			"message": "詳しい内容はこちらをご覧ください。",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"nl": {
+			"message": "Meer hierover.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"pt": {
+			"message": "Leia mais.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"sv": {
+			"message": "Läs mer.",
+			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
+		},
+		"zh": {
+			"message": "閱讀更多。",
 			"url": "https://learn.liferay.com/dxp/latest/en/site-building/creating-pages/using-widget-pages/configuring-widgets/communication-between-widgets.html"
 		}
 	}
