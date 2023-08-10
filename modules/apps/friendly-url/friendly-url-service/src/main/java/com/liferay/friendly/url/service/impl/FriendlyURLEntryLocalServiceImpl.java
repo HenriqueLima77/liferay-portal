@@ -308,12 +308,25 @@ public class FriendlyURLEntryLocalServiceImpl
 				groupId, classNameId,
 				_friendlyURLNormalizer.normalizeWithEncoding(urlTitle), null);
 
+		
+		if (friendlyURLEntryLocalization == null) {
+			friendlyURLEntryLocalization =
+				friendlyURLEntryLocalizationPersistence.fetchByG_C_U_First(
+					groupId, classNameId,
+					_friendlyURLNormalizer.normalize(urlTitle), null);
+		}
+
 		if (friendlyURLEntryLocalization != null) {
 			return friendlyURLEntryPersistence.fetchByPrimaryKey(
 				friendlyURLEntryLocalization.getFriendlyURLEntryId());
 		}
 
-		return null;
+			if (friendlyURLEntryLocalization != null) {
+				return friendlyURLEntryPersistence.fetchByPrimaryKey(
+					friendlyURLEntryLocalization.getFriendlyURLEntryId());
+			}
+
+			return null;
 	}
 
 	@Override
