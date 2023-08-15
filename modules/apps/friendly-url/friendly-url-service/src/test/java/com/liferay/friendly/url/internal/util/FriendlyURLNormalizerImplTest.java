@@ -124,6 +124,12 @@ public class FriendlyURLNormalizerImplTest {
 	}
 
 	@Test
+	public void testNormalizeSimpleAccents() {
+		Assert.assertEquals(
+			"é", _friendlyURLNormalizerImpl.normalize("é"));
+	}
+
+	@Test
 	public void testNormalizeWithEncodingRemove() throws Exception {
 		Assert.assertEquals(
 			StringPool.DASH,
