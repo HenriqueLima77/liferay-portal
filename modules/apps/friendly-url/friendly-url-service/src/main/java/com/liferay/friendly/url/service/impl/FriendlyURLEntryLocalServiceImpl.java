@@ -302,10 +302,26 @@ public class FriendlyURLEntryLocalServiceImpl
 	public FriendlyURLEntry fetchFriendlyURLEntry(
 		long groupId, long classNameId, String urlTitle) {
 
+		return fetchFriendlyURLEntry(groupId, classNameId, urlTitle, false);
+	}
+
+	@Override
+	public FriendlyURLEntry fetchFriendlyURLEntry(
+		long groupId, long classNameId, String urlTitle,
+		boolean oldNormalization) {
+
 		FriendlyURLEntryLocalization friendlyURLEntryLocalization =
 			friendlyURLEntryLocalizationPersistence.fetchByG_C_U_First(
 				groupId, classNameId,
 				_friendlyURLNormalizer.normalizeWithEncoding(urlTitle), null);
+
+		if (friendlyURLEntryLocalization == null && oldNormalization) {
+			friendlyURLEntryLocalization =
+				friendlyURLEntryLocalizationPersistence.fetchByG_C_U_First(
+					groupId, classNameId,
+					_friendlyURLNormalizer.normalizeWithOldEncoding(urlTitle),
+					null);
+		}
 
 		if (friendlyURLEntryLocalization != null) {
 			return friendlyURLEntryPersistence.fetchByPrimaryKey(

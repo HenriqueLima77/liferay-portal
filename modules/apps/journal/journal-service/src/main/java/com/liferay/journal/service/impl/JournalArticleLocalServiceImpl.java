@@ -2004,7 +2004,7 @@ public class JournalArticleLocalServiceImpl
 
 		FriendlyURLEntry friendlyURLEntry =
 			friendlyURLEntryLocalService.fetchFriendlyURLEntry(
-				groupId, JournalArticle.class, urlTitle);
+				groupId, JournalArticle.class, urlTitle, true);
 
 		if (friendlyURLEntry != null) {
 			JournalArticle article = fetchLatestArticle(
