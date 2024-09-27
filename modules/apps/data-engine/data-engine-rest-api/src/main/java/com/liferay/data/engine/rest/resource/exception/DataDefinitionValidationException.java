@@ -149,6 +149,15 @@ public class DataDefinitionValidationException extends PortalException {
 		}
 
 	}
+	public static class MustSetFieldReference
+		extends DataDefinitionValidationException {
+
+		public MustSetFieldReference() {
+			super("Invalid characters were defined for field");
+		}
+
+	}
+
 
 	public static class MustSetFieldType
 		extends DataDefinitionValidationException {

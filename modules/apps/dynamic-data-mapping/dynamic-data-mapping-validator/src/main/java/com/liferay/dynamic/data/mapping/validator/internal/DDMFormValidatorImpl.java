@@ -26,6 +26,7 @@ import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.Mus
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetDefaultLocaleAsAvailableLocale;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetFieldType;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetFieldsForForm;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetFieldReference;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetOptionsForField;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidAvailableLocalesForProperty;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidCharactersForFieldName;
@@ -51,6 +52,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -76,6 +78,10 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 		_validateDDMFormLocales(ddmForm);
 
 		List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
+
+		Map<String, DDMFormField> ddmFormFieldReferences = ddmForm.getDDMFormFieldsReferencesMap(true);
+
+		_validateDDMFormFieldReferences(ddmFormFieldReferences);
 
 		if (ddmFormFields.isEmpty()) {
 			throw new MustSetFieldsForForm();
@@ -228,6 +234,22 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 
 		if (SetUtil.isNotEmpty(duplicatedDDMFieldNames)) {
 			throw new MustNotDuplicateFieldName(duplicatedDDMFieldNames);
+		}
+	}
+
+	private void _validateDDMFormFieldReferences(Map<String, DDMFormField> ddmFormFieldReferences)
+		throws DDMFormValidationException {
+
+		Set<String> emptyDDMFormFieldReferences = new HashSet<>();
+
+		ddmFormFieldReferences.forEach((fieldName, formField) -> {
+			if (fieldName.isEmpty()) {
+				emptyDDMFormFieldReferences.add(fieldName);
+			}
+		});
+
+		if (SetUtil.isNotEmpty(emptyDDMFormFieldReferences)) {
+			throw new MustSetFieldReference();
 		}
 	}
 

@@ -149,6 +149,15 @@ public class DDMFormValidationException extends PortalException {
 
 	}
 
+	public static class MustSetFieldReference
+		extends DDMFormValidationException {
+
+		public MustSetFieldReference() {
+			super("Invalid characters were defined for field");
+		}
+
+	}
+
 	public static class MustSetFieldType extends DDMFormValidationException {
 
 		public MustSetFieldType(String fieldName) {
